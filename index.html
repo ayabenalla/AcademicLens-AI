@@ -72,7 +72,7 @@
         <div class="space-y-1">
           <label for="language-select" class="text-xs font-medium text-slate-700 dark:text-slate-300" data-i18n="lang_label">Language / اللغة</label>
           <select id="language-select" class="w-full text-xs p-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200">
-            <option value="en">English</option><option value="ar">العربية</option><option value="fr">Français</option><option value="es">Español</option><option value="zh">中文</option>
+            <option value="en">English</option><option value="ar">العربية</option><option value="fr">Français</option><option value="es">Español</option><option value="zh">中文</option><option value="ko">한국어</option>
           </select>
         </div>
         <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/50">
@@ -178,16 +178,16 @@
       </div>
       <div class="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
         <div id="pdf-upload-zone" class="hidden space-y-1">
-          <label for="pdf-file" class="text-xs font-semibold text-slate-700 dark:text-slate-300"><i class="fa-solid fa-file-pdf text-red-500 mr-1"></i> Upload Research PDF Paper</label>
+          <label for="pdf-file" id="pdf-upload-label" class="text-xs font-semibold text-slate-700 dark:text-slate-300"><i class="fa-solid fa-file-pdf text-red-500 mr-1"></i> Upload Research PDF Paper</label>
           <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-            <input id="pdf-file" type="file" accept="application/pdf,.pdf" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-academicBlue-600 file:text-white">
+            <label for="pdf-file" id="pdf-pick-label" class="inline-flex cursor-pointer items-center rounded-lg bg-academicBlue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-academicBlue-700">Choose PDF file</label><input id="pdf-file" type="file" accept="application/pdf,.pdf" class="sr-only">
             <p id="pdf-filename" class="text-xs text-slate-600 dark:text-slate-400 mt-2">No file selected</p>
           </div>
         </div>
         <div id="image-upload-zone" class="hidden space-y-1">
-          <label for="image-file" class="text-xs font-semibold text-slate-700 dark:text-slate-300"><i class="fa-solid fa-image text-emerald-500 mr-1"></i> Upload Lesson Diagram or Chart Image</label>
+          <label for="image-file" id="image-upload-label" class="text-xs font-semibold text-slate-700 dark:text-slate-300"><i class="fa-solid fa-image text-emerald-500 mr-1"></i> Upload Lesson Diagram or Chart Image</label>
           <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-            <input id="image-file" type="file" accept="image/*" class="block w-full text-xs text-slate-600 dark:text-slate-300 file:mr-3 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white">
+            <label for="image-file" id="image-pick-label" class="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700">Choose image</label><input id="image-file" type="file" accept="image/*" class="sr-only">
             <p id="image-filename" class="text-xs text-slate-600 dark:text-slate-400 mt-2">No image selected</p>
           </div>
         </div>
@@ -292,33 +292,34 @@
     function processTool() {
       const tool = tools[state.activeTool];
       if (!tool) return;
+      const lang = $("language-select") ? $("language-select").value : "en";
+      const d = translations[lang] || translations.en;
       const textValue = $("modal-textarea").value.trim();
       const pdf = $("pdf-file").files[0];
       const image = $("image-file").files[0];
 
       if ((tool.type === "pdf" || tool.type === "pdf_text") && !pdf && !textValue) {
-        alert("Please choose a PDF file or enter some text first.");
+        alert(d.alert_pdf);
         return;
       }
       if (tool.type === "image" && !image) {
-        alert("Please choose an image first.");
+        alert(d.alert_image);
         return;
       }
       if (["text","length_text","essay"].includes(tool.type) && !textValue) {
-        alert("Please enter your text or topic first.");
+        alert(d.alert_text);
         $("modal-textarea").focus();
         return;
       }
 
       const filename = pdf ? pdf.name : image ? image.name : "";
-      $("ai-output-content").textContent =
-        "Your request is ready for processing.\n\n" +
-        "Tool: " + tool.title + "\n" +
-        (filename ? "Selected file: " + filename + "\n" : "") +
-        "Response length: " + state.length + "\n" +
-        (tool.type === "essay" ? "Writing style: " + $("style-select").value + "\n" : "") +
-        (textValue ? "\nYour input:\n" + textValue + "\n" : "\n") +
-        "\nThis is a demonstration only. No AI model has processed this content yet. Connect a secure AI backend to generate a real answer.";
+      const lines = [d.output_ready, "", d.output_tool + tool.title];
+      if (filename) lines.push(d.output_file + filename);
+      lines.push(d.output_length + state.length);
+      if (tool.type === "essay") lines.push(d.output_style + $("style-select").value);
+      if (textValue) lines.push("", d.output_input, textValue);
+      lines.push("", d.output_demo);
+      $("ai-output-content").textContent = lines.join("\\n");
       $("ai-output-box").classList.remove("hidden");
       $("ai-output-box").scrollIntoView({behavior:"smooth",block:"nearest"});
     }
@@ -352,19 +353,94 @@
     }
 
     const translations = {
-      en:{about_title:"About the App",about_desc:"AcademicLens-AI is an academic study and research assistant designed to help students analyze papers, summarize lessons, and organize their work.",settings_title:"Settings",lang_label:"Language / اللغة",theme_label:"Dark Mode / الوضع الليلي",help_title:"Help & Guidelines",help_step1:"1. Select an academic tool card.",help_step2:"2. Choose a file or paste your lesson notes.",help_step3:"3. Customize the available options.",help_step4:"4. Click the action button to view the demo result.",rate_title:"Rate & Feedback",submit_btn:"Submit Feedback",tagline:'"Your intelligent companion for seamless academic studies and research analysis."',sub_tagline:"Empowering students, researchers, and educators with dedicated AI-driven academic utilities.",dash_title:"Academic Tools Dashboard",dash_sub:"Select any specialized card below to analyze papers, refine lessons, or organize research."},
-      ar:{about_title:"نبذة عن التطبيق",about_desc:"AcademicLens-AI مساعد أكاديمي للدراسة والبحث، يساعد الطلاب على تنظيم الدروس والأبحاث.",settings_title:"الإعدادات",lang_label:"اللغة",theme_label:"الوضع الليلي",help_title:"المساعدة والإرشادات",help_step1:"1. اختر أداة من البطاقات الرئيسية.",help_step2:"2. اختر ملفاً أو الصق نص الدرس.",help_step3:"3. عدّل الخيارات المتاحة.",help_step4:"4. اضغط زر المعالجة لعرض نتيجة تجريبية.",rate_title:"التقييم والآراء",submit_btn:"إرسال التقييم",tagline:'"رفيقك الذكي لدراسة أكاديمية وتحليل الأبحاث."',sub_tagline:"أدوات أكاديمية ذكية لمساعدة الطلاب والباحثين.",dash_title:"لوحة الأدوات الأكاديمية",dash_sub:"اختر أداة لتحليل الأبحاث أو تنظيم الدروس والمراجعة."}
+      en: {
+        about_title:"About the App", about_desc:"AcademicLens-AI is an academic study and research assistant designed to help students analyze papers, summarize lessons, and organize their work.",
+        settings_title:"Settings", lang_label:"Language", theme_label:"Dark Mode", help_title:"Help & Guidelines",
+        help_step1:"1. Select an academic tool card.", help_step2:"2. Choose a file or paste your lesson notes.", help_step3:"3. Customize the available options.", help_step4:"4. Click the action button to view the demo result.",
+        rate_title:"Rate & Feedback", submit_btn:"Submit Feedback", tagline:'"Your intelligent companion for seamless academic studies and research analysis."',
+        sub_tagline:"Empowering students, researchers, and educators with dedicated AI-driven academic utilities.", dash_title:"Academic Tools Dashboard",
+        dash_sub:"Select any specialized card below to analyze papers, refine lessons, or organize research.",
+        pdf_pick:"Choose PDF file", image_pick:"Choose image", no_pdf:"No file selected", no_image:"No image selected", selected:"Selected: ",
+        pdf_label:"Upload Research PDF Paper", image_label:"Upload Lesson Diagram or Chart Image", input_label:"Input Lesson Text / Research Topic",
+        placeholder:"Paste your text or enter topic here...", process:"Process Request", alert_pdf:"Please choose a PDF file or enter some text first.", alert_image:"Please choose an image first.", alert_text:"Please enter your text or topic first.", output_ready:"Your request is ready for processing.", output_tool:"Tool: ", output_file:"Selected file: ", output_length:"Response length: ", output_style:"Writing style: ", output_input:"Your input:", output_demo:"This is a demonstration only. No AI model has processed this content yet. Connect a secure AI backend to generate a real answer."
+      },
+      ar: {
+        about_title:"نبذة عن التطبيق", about_desc:"AcademicLens-AI مساعد أكاديمي للدراسة والبحث، يساعد الطلاب على تنظيم الدروس والأبحاث.",
+        settings_title:"الإعدادات", lang_label:"اللغة", theme_label:"الوضع الليلي", help_title:"المساعدة والإرشادات",
+        help_step1:"1. اختر أداة من البطاقات الرئيسية.", help_step2:"2. اختر ملفاً أو الصق نص الدرس.", help_step3:"3. عدّل الخيارات المتاحة.", help_step4:"4. اضغط زر المعالجة لعرض نتيجة تجريبية.",
+        rate_title:"التقييم والآراء", submit_btn:"إرسال التقييم", tagline:'"رفيقك الذكي للدراسة الأكاديمية وتحليل الأبحاث."', sub_tagline:"أدوات أكاديمية ذكية لمساعدة الطلاب والباحثين.",
+        dash_title:"لوحة الأدوات الأكاديمية", dash_sub:"اختر أداة لتحليل الأبحاث أو تنظيم الدروس والمراجعة.",
+        pdf_pick:"اختيار ملف PDF", image_pick:"اختيار صورة", no_pdf:"لم يتم اختيار أي ملف", no_image:"لم يتم اختيار صورة", selected:"تم الاختيار: ",
+        pdf_label:"تحميل بحث بصيغة PDF", image_label:"تحميل صورة درس أو رسم بياني", input_label:"أدخل نص الدرس أو موضوع البحث",
+        placeholder:"ألصق النص أو اكتب الموضوع هنا...", process:"معالجة الطلب", alert_pdf:"يرجى اختيار ملف PDF أو إدخال نص أولاً.", alert_image:"يرجى اختيار صورة أولاً.", alert_text:"يرجى إدخال النص أو الموضوع أولاً.", output_ready:"طلبك جاهز للمعالجة.", output_tool:"الأداة: ", output_file:"الملف المختار: ", output_length:"طول الإجابة: ", output_style:"أسلوب الكتابة: ", output_input:"النص الذي أدخلته:", output_demo:"هذه مجرد تجربة توضيحية. لم يعالج نموذج ذكاء اصطناعي هذا المحتوى بعد. يلزم ربط الموقع بخدمة ذكاء اصطناعي لإنتاج إجابة حقيقية."
+      },
+      fr: {
+        about_title:"À propos", about_desc:"AcademicLens-AI est un assistant d'étude et de recherche pour analyser les articles, résumer les cours et organiser le travail.",
+        settings_title:"Paramètres", lang_label:"Langue", theme_label:"Mode sombre", help_title:"Aide et consignes",
+        help_step1:"1. Sélectionnez une carte d’outil.", help_step2:"2. Choisissez un fichier ou collez vos notes.", help_step3:"3. Personnalisez les options disponibles.", help_step4:"4. Cliquez sur le bouton pour afficher le résultat de démonstration.",
+        rate_title:"Évaluation et commentaires", submit_btn:"Envoyer l’avis", tagline:'"Votre assistant intelligent pour les études et la recherche."', sub_tagline:"Des outils académiques assistés par l’IA pour les étudiants et chercheurs.",
+        dash_title:"Tableau de bord des outils", dash_sub:"Choisissez un outil pour analyser des articles, améliorer vos cours ou organiser vos recherches.",
+        pdf_pick:"Choisir un fichier PDF", image_pick:"Choisir une image", no_pdf:"Aucun fichier sélectionné", no_image:"Aucune image sélectionnée", selected:"Sélectionné : ",
+        pdf_label:"Importer un article de recherche PDF", image_label:"Importer une image ou un graphique", input_label:"Texte du cours / sujet de recherche",
+        placeholder:"Collez votre texte ou saisissez un sujet ici...", process:"Traiter la demande", alert_pdf:"Veuillez choisir un fichier PDF ou saisir du texte.", alert_image:"Veuillez choisir une image.", alert_text:"Veuillez saisir votre texte ou sujet.", output_ready:"Votre demande est prête à être traitée.", output_tool:"Outil : ", output_file:"Fichier sélectionné : ", output_length:"Longueur de la réponse : ", output_style:"Style d’écriture : ", output_input:"Votre saisie :", output_demo:"Ceci est une démonstration. Aucun modèle d’IA n’a encore traité ce contenu. Connectez un service d’IA sécurisé pour obtenir une vraie réponse."
+      },
+      es: {
+        about_title:"Acerca de la aplicación", about_desc:"AcademicLens-AI es un asistente académico para analizar artículos, resumir lecciones y organizar el trabajo.",
+        settings_title:"Configuración", lang_label:"Idioma", theme_label:"Modo oscuro", help_title:"Ayuda e instrucciones",
+        help_step1:"1. Selecciona una herramienta.", help_step2:"2. Elige un archivo o pega tus apuntes.", help_step3:"3. Personaliza las opciones disponibles.", help_step4:"4. Pulsa el botón para ver el resultado de demostración.",
+        rate_title:"Calificación y comentarios", submit_btn:"Enviar comentarios", tagline:'"Tu compañero inteligente para estudiar e investigar."', sub_tagline:"Herramientas académicas con IA para estudiantes e investigadores.",
+        dash_title:"Panel de herramientas académicas", dash_sub:"Elige una herramienta para analizar artículos, mejorar lecciones u organizar investigaciones.",
+        pdf_pick:"Elegir archivo PDF", image_pick:"Elegir imagen", no_pdf:"Ningún archivo seleccionado", no_image:"Ninguna imagen seleccionada", selected:"Seleccionado: ",
+        pdf_label:"Subir artículo de investigación PDF", image_label:"Subir imagen o gráfico de la lección", input_label:"Texto de la lección / tema de investigación",
+        placeholder:"Pega tu texto o escribe un tema aquí...", process:"Procesar solicitud", alert_pdf:"Elige un archivo PDF o introduce texto primero.", alert_image:"Elige una imagen primero.", alert_text:"Introduce tu texto o tema primero.", output_ready:"Tu solicitud está lista para procesarse.", output_tool:"Herramienta: ", output_file:"Archivo seleccionado: ", output_length:"Longitud de respuesta: ", output_style:"Estilo de escritura: ", output_input:"Tu texto:", output_demo:"Esto es solo una demostración. Ningún modelo de IA ha procesado este contenido todavía. Conecta un servicio de IA seguro para obtener una respuesta real."
+      },
+      zh: {
+        about_title:"关于应用", about_desc:"AcademicLens-AI 是学术学习与研究助手，可帮助分析论文、总结课程并整理学习内容。",
+        settings_title:"设置", lang_label:"语言", theme_label:"深色模式", help_title:"帮助与指南",
+        help_step1:"1. 选择一个学术工具。", help_step2:"2. 选择文件或粘贴课程笔记。", help_step3:"3. 自定义可用选项。", help_step4:"4. 点击操作按钮查看演示结果。",
+        rate_title:"评分与反馈", submit_btn:"提交反馈", tagline:'"让学习与研究更轻松的智能助手。"', sub_tagline:"为学生、研究人员和教育工作者提供 AI 学术工具。",
+        dash_title:"学术工具面板", dash_sub:"选择工具来分析论文、优化课程内容或整理研究。",
+        pdf_pick:"选择 PDF 文件", image_pick:"选择图片", no_pdf:"未选择文件", no_image:"未选择图片", selected:"已选择：",
+        pdf_label:"上传 PDF 研究论文", image_label:"上传课程图片或图表", input_label:"输入课程文本 / 研究主题",
+        placeholder:"在此粘贴文本或输入主题...", process:"处理请求", alert_pdf:"请先选择 PDF 文件或输入文本。", alert_image:"请先选择图片。", alert_text:"请先输入文本或主题。", output_ready:"您的请求已准备好处理。", output_tool:"工具：", output_file:"已选文件：", output_length:"回答长度：", output_style:"写作风格：", output_input:"您输入的内容：", output_demo:"这只是演示。目前尚无 AI 模型处理此内容。连接安全的 AI 服务后才能生成真实回答。"
+      },
+      ko: {
+        about_title:"앱 소개", about_desc:"AcademicLens-AI는 논문 분석, 수업 요약 및 학습 자료 정리를 돕는 학술 학습 도우미입니다.",
+        settings_title:"설정", lang_label:"언어", theme_label:"다크 모드", help_title:"도움말 및 안내",
+        help_step1:"1. 학술 도구 카드를 선택하세요.", help_step2:"2. 파일을 선택하거나 수업 노트를 붙여 넣으세요.", help_step3:"3. 사용 가능한 옵션을 설정하세요.", help_step4:"4. 버튼을 눌러 데모 결과를 확인하세요.",
+        rate_title:"평가 및 의견", submit_btn:"의견 제출", tagline:'"학습과 연구를 위한 지능형 동반자."', sub_tagline:"학생과 연구자를 위한 AI 기반 학술 도구입니다.",
+        dash_title:"학술 도구 대시보드", dash_sub:"논문 분석, 수업 개선 또는 연구 정리를 위한 도구를 선택하세요.",
+        pdf_pick:"PDF 파일 선택", image_pick:"이미지 선택", no_pdf:"선택된 파일 없음", no_image:"선택된 이미지 없음", selected:"선택됨: ",
+        pdf_label:"연구 PDF 업로드", image_label:"수업 이미지 또는 차트 업로드", input_label:"수업 텍스트 / 연구 주제 입력",
+        placeholder:"텍스트를 붙여 넣거나 주제를 입력하세요...", process:"요청 처리", alert_pdf:"먼저 PDF 파일을 선택하거나 텍스트를 입력하세요.", alert_image:"먼저 이미지를 선택하세요.", alert_text:"먼저 텍스트나 주제를 입력하세요.", output_ready:"요청을 처리할 준비가 되었습니다.", output_tool:"도구: ", output_file:"선택한 파일: ", output_length:"응답 길이: ", output_style:"작성 스타일: ", output_input:"입력한 내용:", output_demo:"이것은 데모입니다. 아직 AI 모델이 이 내용을 처리하지 않았습니다. 실제 답변을 생성하려면 안전한 AI 서비스를 연결해야 합니다."
+      }
     };
 
     function changeLanguage(lang) {
-      const dict = translations[lang];
-      if (!dict) { document.documentElement.lang = lang; document.documentElement.dir = "ltr"; return; }
+      const dict = translations[lang] || translations.en;
       document.querySelectorAll("[data-i18n]").forEach(el => {
         const key = el.getAttribute("data-i18n");
-        if (dict[key]) el.textContent = dict[key];
+        if (Object.prototype.hasOwnProperty.call(dict, key)) el.textContent = dict[key];
       });
+      const textMap = {
+        "pdf-pick-label":"pdf_pick", "image-pick-label":"image_pick",
+        "pdf-upload-label":"pdf_label", "image-upload-label":"image_label", "input-text-label":"input_label"
+      };
+      Object.entries(textMap).forEach(([id,key]) => {
+        const el = document.getElementById(id);
+        if (el && dict[key]) el.textContent = dict[key];
+      });
+      const pdf = document.getElementById("pdf-filename");
+      const image = document.getElementById("image-filename");
+      if (pdf && !document.getElementById("pdf-file").files.length) pdf.textContent = dict.no_pdf;
+      if (image && !document.getElementById("image-file").files.length) image.textContent = dict.no_image;
+      const area = document.getElementById("modal-textarea");
+      if (area) area.placeholder = dict.placeholder;
+      const action = document.getElementById("modal-btn-text");
+      if (action) action.textContent = dict.process;
       document.documentElement.lang = lang;
       document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+      document.documentElement.dataset.language = lang;
     }
 
     // Use event listeners rather than inline onclick handlers.
@@ -378,8 +454,9 @@
     $("modal-action-btn").addEventListener("click", processTool);
     $("copy-output-btn").addEventListener("click", copyOutput);
     $("language-select").addEventListener("change", event => changeLanguage(event.target.value));
-    $("pdf-file").addEventListener("change", event => { const f = event.target.files[0]; $("pdf-filename").textContent = f ? "Selected: " + f.name : "No file selected"; });
-    $("image-file").addEventListener("change", event => { const f = event.target.files[0]; $("image-filename").textContent = f ? "Selected: " + f.name : "No image selected"; });
+    changeLanguage($("language-select").value);
+    $("pdf-file").addEventListener("change", event => { const d = translations[$("language-select").value] || translations.en; const f = event.target.files[0]; $("pdf-filename").textContent = f ? d.selected + f.name : d.no_pdf; });
+    $("image-file").addEventListener("change", event => { const d = translations[$("language-select").value] || translations.en; const f = event.target.files[0]; $("image-filename").textContent = f ? d.selected + f.name : d.no_image; });
     document.querySelectorAll(".tool-card").forEach(card => {
       const activate = () => openModal(card.dataset.tool);
       card.addEventListener("click", activate);
