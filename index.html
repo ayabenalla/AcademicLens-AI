@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AcademicLens-AI 🍃</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        academicBlue: {
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a',
+                        },
+                        softGreen: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            light: '#e8f5e9',
+                            darkCard: '#0f291e',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #2563eb;
+            border-radius: 9999px;
+        }
+        .backdrop-blur-custom {
+            backdrop-filter: blur(8px);
+        }
+        .card-hover-effect {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover-effect:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 24px -10px rgba(37, 99, 235, 0.25);
+        }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-300">
+
+    <!-- OVERLAY BACKDROP FOR SIDEBAR -->
+    <div id="sidebar-backdrop" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/70 z-40 hidden transition-opacity duration-300 backdrop-blur-sm"></div>
+
+    <!-- SLIDING SIDEBAR (☰) -->
+    <aside id="sidebar" class="fixed top-0 left-0 w-80 max-w-[85vw] h-full bg-white dark:bg-slate-900 z-50 transform -translate-x-full transition-transform duration-300 ease-in-out shadow-2xl flex flex-col border-r border-slate-200 dark:border-slate-800">
+        <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-emerald-50/50 dark:bg-emerald-950/20">
+            <div class="flex items-center space-x-2">
+                <span class="text-2xl">🍃</span>
+                <span class="font-bold text-lg text-emerald-600 dark:text-emerald-400">AcademicLens-AI</span>
+            </div>
+            <button onclick="toggleSidebar()" class="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg focus:outline-none">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-5 space-y-6">
+            <div class="space-y-2">
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-academicBlue-600 dark:text-academicBlue-400 flex items-center gap-2">
+                    <i class="fa-solid fa-circle-info"></i> <span data-i18n="about_title">About the App</span>
+                </h3>
+                <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs text-slate-600 dark:text-slate-300 leading-relaxed border border-slate-200/60 dark:border-slate-700/50" data-i18n="about_desc">
+                    AcademicLens-AI is an advanced academic study and research assistant powered by artificial intelligence. It is designed to help students and researchers analyze complex scientific papers, summarize academic lessons, extract key insights, and elevate writing efficiency seamlessly.
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-academicBlue-600 dark:text-academicBlue-400 flex items-center gap-2">
+                    <i class="fa-solid fa-gear"></i> <span data-i18n="settings_title">Settings</span>
+                </h3>
+                <div class="space-y-1">
+                    <label class="text-xs font-medium text-slate-700 dark:text-slate-300" data-i18n="lang_label">Language / اللغة</label>
+                    <select id="language-select" onchange="changeLanguage(this.value)" class="w-full text-xs p-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 focus:ring-2 focus:ring-academicBlue-500 outline-none">
+                        <option value="en">English (Default)</option>
+                        <option value="ar">العربية (Arabic)</option>
+                        <option value="fr">Français (French)</option>
+                        <option value="es">Español (Spanish)</option>
+                        <option value="zh">中文 (Chinese)</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/50">
+                    <span class="text-xs font-medium text-slate-700 dark:text-slate-300" data-i18n="theme_label">Dark Mode / الوضع الليلي</span>
+                    <button onclick="toggleDarkMode()" class="p-1.5 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-amber-300 hover:scale-105 transition-transform">
+                        <i id="sidebar-theme-icon" class="fa-solid fa-moon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-academicBlue-600 dark:text-academicBlue-400 flex items-center gap-2">
+                    <i class="fa-solid fa-lightbulb"></i> <span data-i18n="help_title">Help & Guidelines</span>
+                </h3>
+                <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs text-slate-600 dark:text-slate-300 space-y-2 border border-slate-200/60 dark:border-slate-700/50">
+                    <p data-i18n="help_step1">1. Select any academic tool card from the main dashboard.</p>
+                    <p data-i18n="help_step2">2. Upload a research PDF paper, image diagram, or paste your lesson notes.</p>
+                    <p data-i18n="help_step3">3. Customize options like answer length or academic style when available.</p>
+                    <p data-i18n="help_step4">4. Click the action button to process and view AI outputs instantly.</p>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <h3 class="text-sm font-semibold uppercase tracking-wider text-academicBlue-600 dark:text-academicBlue-400 flex items-center gap-2">
+                    <i class="fa-solid fa-star"></i> <span data-i18n="rate_title">Rate & Feedback</span>
+                </h3>
+                <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs space-y-3 border border-slate-200/60 dark:border-slate-700/50">
+                    <div class="flex items-center justify-center space-x-1 text-amber-400 text-lg cursor-pointer" id="star-rating">
+                        <i class="fa-regular fa-star" onclick="setRating(1)"></i>
+                        <i class="fa-regular fa-star" onclick="setRating(2)"></i>
+                        <i class="fa-regular fa-star" onclick="setRating(3)"></i>
+                        <i class="fa-regular fa-star" onclick="setRating(4)"></i>
+                        <i class="fa-regular fa-star" onclick="setRating(5)"></i>
+                    </div>
+                    <textarea id="feedback-text" rows="2" placeholder="Leave feedback or suggestions..." class="w-full p-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200 focus:outline-none focus:ring-1 focus:ring-academicBlue-500"></textarea>
+                    <button onclick="submitFeedback()" class="w-full py-2 bg-academicBlue-600 hover:bg-academicBlue-700 text-white rounded-lg text-xs font-semibold transition-colors" data-i18n="submit_btn">
+                        Submit Feedback
+                    </button>
+                    <p id="feedback-msg" class="hidden text-emerald-600 dark:text-emerald-400 text-[11px] text-center font-medium">Thank you for your feedback!</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800 text-center text-[11px] text-slate-400">
+            AcademicLens-AI v2.5 • Academic Portal
+        </div>
+    </aside>
+
+    <!-- TOP HEADER & NAVBAR -->
+    <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3 sm:space-x-4">
+                <button onclick="toggleSidebar()" class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 focus:outline-none transition-colors" title="Open Sidebar">
+                    <i class="fa-solid fa-bars text-xl sm:text-2xl"></i>
+                </button>
+                <div class="flex items-center space-x-2">
+                    <span class="text-2xl sm:text-3xl">🍃</span>
+                    <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400">
+                        AcademicLens-AI
+                    </h1>
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-2">
+                <button onclick="toggleDarkMode()" class="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-amber-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all text-lg" title="Toggle Dark Mode">
+                    <span id="nav-theme-icon">🌜</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTAINER -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <section class="bg-gradient-to-r from-emerald-600 via-academicBlue-600 to-indigo-700 rounded-3xl p-6 sm:p-10 text-white shadow-xl relative overflow-hidden">
+            <div class="absolute -right-10 -bottom-10 opacity-15 pointer-events-none text-9xl font-extrabold select-none">
+                🎓
+            </div>
+            <div class="relative z-10 max-w-3xl space-y-3">
+                <span class="inline-block px-3 py-1 bg-white/20 backdrop-blur-md text-xs sm:text-sm font-semibold rounded-full uppercase tracking-wider text-emerald-100">
+                    Academic AI Portal
+                </span>
+                <p id="tagline-text" class="text-lg sm:text-2xl md:text-3xl font-bold leading-relaxed sm:leading-snug text-white" data-i18n="tagline">
+                    "Your intelligent companion for seamless academic studies and research analysis."
+                </p>
+                <p class="text-xs sm:text-sm text-emerald-100/90" data-i18n="sub_tagline">
+                    Empowering students, researchers, and educators with dedicated AI-driven academic utilities.
+                </p>
+            </div>
+        </section>
+
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
+            <div>
+                <h2 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100" data-i18n="dash_title">
+                    Academic Tools Dashboard
+                </h2>
+                <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400" data-i18n="dash_sub">
+                    Select any specialized card below to analyze papers, refine lessons, or organize research.
+                </p>
+            </div>
+            <span class="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-academicBlue-100 text-academicBlue-800 dark:bg-academicBlue-950 dark:text-academicBlue-300">
+                10 Active AI Tools
+            </span>
+        </div>
+
+        <!-- 10 CARDS GRID -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+
+            <div onclick="openToolModal(1)" class="card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md relative overflow-hidden group">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">📄</span>
+                        <h3 class="text-lg font-bold text-black dark:text-white" data-i18n="c1_title">
+                            Academic Paper Summarizer
+                        </h3>
+                    </div>
+                    <p class="text-xs sm:text-sm text-black font-normal dark:text-slate-200 leading-relaxed" data-i18n="c1_desc">
+                        (Upload research PDFs, images, or paste text to generate instant summary and key insights)
+                    </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold">
+                    <span data-i18n="open_tool">Open Tool & Upload</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+
+            <div onclick="openToolModal(2)" class="card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md relative overflow-hidden group">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">✍️</span>
+                        <h3 class="text-lg font-bold text-black dark:text-white" data-i18n="c2_title">
+                            Lesson Paraphraser & Refiner
+                        </h3>
+                    </div>
+                    <p class="text-xs sm:text-sm text-black font-normal dark:text-slate-200 leading-relaxed" data-i18n="c2_desc">
+                        (Upload PDF, image, or paste text to refine, reorganize, and paraphrase lesson content)
+                    </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold">
+                    <span data-i18n="open_tool">Open Tool & Upload</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+
+            <div onclick="openToolModal(3)" class="card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md relative overflow-hidden group">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">🤖</span>
+                        <h3 class="text-lg font-bold text-black dark:text-white" data-i18n="c3_title">
+                            Academic Tone Humanizer
+                        </h3>
+                    </div>
+                    <p class="text-xs sm:text-sm text-black font-normal dark:text-slate-200 leading-relaxed" data-i18n="c3_desc">
+                        (Transform complex AI or drafted text into natural, easy-to-read academic language with answer length options)
+                    </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold">
+                    <span data-i18n="open_tool">Open Tool & Customize</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+
+            <div onclick="openToolModal(4)" class="card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md relative overflow-hidden group">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">📝</span>
+                        <h3 class="text-lg font-bold text-black dark:text-white" data-i18n="c4_title">
+                            Advanced Essay & Notes Writer
+                        </h3>
+                    </div>
+                    <p class="text-xs sm:text-sm text-black font-normal dark:text-slate-200 leading-relaxed" data-i18n="c4_desc">
+                        (Generate essays and study notes with custom length and writing style choices)
+                    </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold">
+                    <span data-i18n="open_tool">Open Tool & Configure</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+
+            <div onclick="openToolModal(5)" class="card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md relative overflow-hidden group">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">💡</span>
+                        <h3 class="text-lg font-bold text-black dark:text-white" data-i18n="c5_title">
+                            Concept & Terminology Explainer
+                        </h3>
+                    </div>
+                    <p class="text-xs sm:text-sm text-black font-normal dark:text-slate-200 leading-relaxed" data-i18n="c5_desc">
+                        (Type any complex scientific concept or term to receive clear, step-by-step explanations)
+                    </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold">
+                    <span data-i18n="open_tool">Open Tool</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+
+            <div onclick="openToolModal(6)" class="card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md relative overflow-hidden group">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">📚</span>
+                        <h3 class="text-lg font-bold text-black dark:text-white" data-i18n="c6_title">
+                            Quick Reference & Notes Organizer
+                        </h3>
+                    </div>
+                    <p class="text-xs sm:text-sm text-black font-normal dark:text-slate-200 leading-relaxed" data-i18n="c6_desc">
+                        (Organize scattered study notes, links, and references into structured tables and summaries)
+                    </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold">
+                    <span data-i18n="open_tool">Open Tool</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+
+            <div onclick="openToolModal(7)" class="card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md relative overflow-hidden group">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">📊</span>
+                        <h3 class="text-lg font-bold text-black dark:text-white" data-i18n="c7_title">
+                            Academic Data & Chart Explainer
+                        </h3>
+                    </div>
+                    <p class="text-xs sm:text-sm text-black font-normal dark:text-slate-200 leading-relaxed" data-i18n="c7_desc">
+                        (Upload charts, diagrams, or PDF data tables to extract scientific trends and conclusions)
+                    </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold">
+                    <span data-i18n="open_tool">Open Tool & Upload</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+
+            <div onclick="openToolModal(8)" class="card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md relative overflow-hidden group">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">❓</span>
+                        <h3 class="text-lg font-bold text-black dark:text-white" data-i18n="c8_title">
+                            Academic Quiz & Flashcards Generator
+                        </h3>
+                    </div>
+                    <p class="text-xs sm:text-sm text-black font-normal dark:text-slate-200 leading-relaxed" data-i18n="c8_desc">
+                        (Upload lesson PDFs or images to automatically generate self-test quizzes and revision flashcards)
+                    </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold">
+                    <span data-i18n="open_tool">Open Tool & Generate</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+
+            <div onclick="openToolModal(9)" class="card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md relative overflow-hidden group">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">🔍</span>
+                        <h3 class="text-lg font-bold text-black dark:text-white" data-i18n="c9_title">
+                            Critical Thinking & Analysis Prompt
+                        </h3>
+                    </div>
+                    <p class="text-xs sm:text-sm text-black font-normal dark:text-slate-200 leading-relaxed" data-i18n="c9_desc">
+                        (Input academic claims or texts to evaluate arguments and uncover critical research questions)
+                    </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold">
+                    <span data-i18n="open_tool">Open Tool</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+
+            <div onclick="openToolModal(10)" class="card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md relative overflow-hidden group">
+                <div class="space-y-3">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-3xl group-hover:scale-110 transition-transform">⏱️</span>
+                        <h3 class="text-lg font-bold text-black dark:text-white" data-i18n="c10_title">
+                            Study Schedule & Milestone Planner
+                        </h3>
+                    </div>
+                    <p class="text-xs sm:text-sm text-black font-normal dark:text-slate-200 leading-relaxed" data-i18n="c10_desc">
+                        (Break down large academic syllabi into daily and weekly actionable study milestones)
+                    </p>
+                </div>
+                <div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold">
+                    <span data-i18n="open_tool">Open Tool & Plan</span>
+                    <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 mt-12 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 text-center space-y-2">
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+                AcademicLens-AI • Tailored Exclusively for Lessons & Scientific Research
+            </p>
+            <p class="text-[11px] text-slate-400 dark:text-slate-500">
+                © 2026 AcademicLens-AI. All rights reserved.
+            </p>
+        </div>
+    </footer>
+
+    <!-- INTERACTIVE TOOL MODAL DIALOG -->
+    <div id="tool-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 sm:p-6 backdrop-blur-custom bg-slate-900/60 dark:bg-slate-950/80">
+        <div class="bg-white dark:bg-slate-900 border-2 border-academicBlue-600 rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-fade-in">
+            
+            <div class="p-5 bg-softGreen-light dark:bg-softGreen-darkCard border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center space-x-3">
+                    <span id="modal-emoji" class="text-3xl">📄</span>
+                    <div>
+                        <h3 id="modal-title" class="text-lg font-bold text-black dark:text-white">
+                            Tool Name
+                        </h3>
+                        <p id="modal-subtitle" class="text-xs text-black/80 dark:text-slate-300 font-normal">
+                            Tool Description
+                        </p>
+                    </div>
+                </div>
+                <button onclick="closeToolModal()" class="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <div class="p-6 overflow-y-auto space-y-5 flex-1">
+                
+                <div id="pdf-upload-zone" class="hidden space-y-1">
+                    <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        <i class="fa-solid fa-file-pdf text-red-500 mr-1"></i> Upload Research PDF Paper
+                    </label>
+                    <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors relative cursor-pointer">
+                        <input type="file" accept=".pdf" onchange="handleFileSelected(this, 'pdf')" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <i class="fa-solid fa-cloud-arrow-up text-2xl text-academicBlue-600 mb-1"></i>
+                        <p id="pdf-filename" class="text-xs text-slate-600 dark:text-slate-400 font-medium">Click or drag & drop PDF here</p>
+                    </div>
+                </div>
+
+                <div id="image-upload-zone" class="hidden space-y-1">
+                    <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        <i class="fa-solid fa-image text-emerald-500 mr-1"></i> Upload Lesson Diagram or Chart Image
+                    </label>
+                    <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors relative cursor-pointer">
+                        <input type="file" accept="image/*" onchange="handleFileSelected(this, 'image')" class="absolute inset-0 opacity-0 cursor-pointer">
+                        <i class="fa-solid fa-file-image text-2xl text-emerald-600 mb-1"></i>
+                        <p id="image-filename" class="text-xs text-slate-600 dark:text-slate-400 font-medium">Click or drag & drop Image here</p>
+                    </div>
+                </div>
+
+                <div id="text-input-zone" class="space-y-1">
+                    <label id="text-input-label" class="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        Input Lesson Text / Research Topic
+                    </label>
+                    <textarea id="modal-textarea" rows="4" placeholder="Paste your text or enter topic here..." class="w-full p-3 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-academicBlue-500 focus:outline-none"></textarea>
+                </div>
+
+                <div id="length-options-zone" class="hidden space-y-1">
+                    <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Select Response / Essay Length</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button type="button" onclick="selectLength('Short')" class="length-btn p-2 text-xs border border-slate-300 dark:border-slate-700 rounded-xl text-center font-medium hover:border-academicBlue-500 focus:bg-academicBlue-600 focus:text-white">Short (قصير)</button>
+                        <button type="button" onclick="selectLength('Medium')" class="length-btn p-2 text-xs border border-slate-300 dark:border-slate-700 rounded-xl text-center font-medium bg-academicBlue-600 text-white">Medium (متوسط)</button>
+                        <button type="button" onclick="selectLength('Long')" class="length-btn p-2 text-xs border border-slate-300 dark:border-slate-700 rounded-xl text-center font-medium hover:border-academicBlue-500 focus:bg-academicBlue-600 focus:text-white">Long (طويل)</button>
+                    </div>
+                </div>
+
+                <div id="style-options-zone" class="hidden space-y-1">
+                    <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Select Writing Style / الأسلوب</label>
+                    <select id="style-select" class="w-full p-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100">
+                        <option value="Analytical">Analytical (تحليلي)</option>
+                        <option value="Narrative">Narrative (سردي)</option>
+                        <option value="Argumentative">Argumentative (جدلي)</option>
+                        <option value="Descriptive">Descriptive (وصفي)</option>
+                    </select>
+                </div>
+
+                <button id="modal-action-btn" onclick="processAiTool()" class="w-full py-3 bg-academicBlue-600 hover:bg-academicBlue-700 text-white rounded-xl text-sm font-bold shadow-lg transition-all flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span id="modal-btn-text">Process Request</span>
+                </button>
+
+                <div id="ai-output-box" class="hidden space-y-2 pt-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider">
+                            <i class="fa-solid fa-circle-check"></i> AI Generated Result:
+                        </span>
+                        <button onclick="copyOutputText()" class="text-[11px] text-academicBlue-600 dark:text-academicBlue-400 font-semibold hover:underline">
+                            <i class="fa-solid fa-copy"></i> Copy Output
+                        </button>
+                    </div>
+                    <div id="ai-output-content" class="p-4 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-line">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        let currentLang = 'en';
+        let isDarkMode = false;
+        let activeToolId = null;
+        let selectedLength = 'Medium';
+        let currentRating = 0;
+
+        const translations = {
+            en: {
+                about_title: "About the App",
+                about_desc: "AcademicLens-AI is an advanced academic study and research assistant powered by artificial intelligence.",
+                settings_title: "Settings",
+                lang_label: "Language / اللغة",
+                theme_label: "Dark Mode",
+                help_title: "Help & Guidelines",
+                help_step1: "1. Select any academic tool card from the main dashboard.",
+                help_step2: "2. Upload a research PDF paper, image diagram, or paste your lesson notes.",
+                help_step3: "3. Customize options like answer length or academic style when available.",
+                help_step4: "4. Click the action button to process and view AI outputs instantly.",
+                rate_title: "Rate & Feedback",
+                submit_btn: "Submit Feedback",
+                tagline: '"Your intelligent companion for seamless academic studies and research analysis."',
+                sub_tagline: "Empowering students, researchers, and educators with dedicated AI-driven academic utilities.",
+                dash_title: "Academic Tools Dashboard",
+                dash_sub: "Select any specialized card below to analyze papers, refine lessons, or organize research.",
+                open_tool: "Open Tool"
+            },
+            ar: {
+                about_title: "نبذة عن التطبيق",
+                about_desc: "تطبيق AcademicLens-AI هو مساعد أكاديمي متطور مخصص للدروس والأبحاث بفضل الذكاء الاصطناعي.",
+                settings_title: "الإعدادات",
+                lang_label: "اللغة",
+                theme_label: "الوضع الليلي",
+                help_title: "المساعدة والإرشادات",
+                help_step1: "1. اختر أي أداة دراسية من واجهة البطاقات الرئيسية.",
+                help_step2: "2. ارفع بحثاً بصيغة PDF، صورة رسم بياني، أو الصق ملخصات دروسك.",
+                help_step3: "3. اضبط الخيارات المتاحة مثل طول الإجابة أو الأسلوب الأكاديمي.",
+                help_step4: "4. اضغط زر المعالجة لاستعراض نتائج الذكاء الاصطناعي فوراً.",
+                rate_title: "التقييم والآراء",
+                submit_btn: "إرسال التقييم",
+                tagline: '"رفيقك الذكي لدراسة أكاديمية سلسة وتحليل الأبحاث."',
+                sub_tagline: "تمكين الطلاب والباحثين بأدوات أكاديمية مخصصة مدعومة بالذكاء الاصطناعي.",
+                dash_title: "لوحة الأدوات الأكاديمية",
+                dash_sub: "اختر أياً من البطاقات المتخصصة أدناه لتحليل الأبحاث، تنظيم الدروس، أو تخطيط المراجعة.",
+                open_tool: "افتح الأداة"
+            }
+        };
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            if (sidebar && backdrop) {
+                sidebar.classList.toggle('-translate-x-full');
+                backdrop.classList.toggle('hidden');
+            }
+        }
+
+        function toggleDarkMode() {
+            isDarkMode = !isDarkMode;
+            document.documentElement.classList.toggle('dark', isDarkMode);
+            const navIcon = document.getElementById('nav-theme-icon');
+            const sidebarIcon = document.getElementById('sidebar-theme-icon');
+            
+            if (isDarkMode) {
+                if (navIcon) navIcon.textContent = '☀️';
+                if (sidebarIcon) sidebarIcon.className = 'fa-solid fa-sun';
+            } else {
+                if (navIcon) navIcon.textContent = '🌜';
+                if (sidebarIcon) sidebarIcon.className = 'fa-solid fa-moon';
+            }
+        }
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            const dict = translations[lang];
+            if (!dict) return;
+
+            document.querySelectorAll('[data-i18n]').forEach(el => {
+                const key = el.getAttribute('data-i18n');
+                if (dict[key]) {
+                    el.textContent = dict[key];
+                }
+            });
+
+            if (lang === 'ar') {
+                document.documentElement.setAttribute('dir', 'rtl');
+            } else {
+                document.documentElement.setAttribute('dir', 'ltr');
+            }
+        }
+
+        function setRating(stars) {
+            currentRating = stars;
+            const ratingContainer = document.getElementById('star-rating');
+            if (!ratingContainer) return;
+            const icons = ratingContainer.querySelectorAll('i');
+            
+            icons.forEach((icon, index) => {
+                if (index < stars) {
+                    icon.className = 'fa-solid fa-star text-amber-400';
+                } else {
+                    icon.className = 'fa-regular fa-star text-amber-400';
+                }
+            });
+        }
+
+        function submitFeedback() {
+            const msg = document.getElementById('feedback-msg');
+            if (msg) {
+                msg.classList.remove('hidden');
+                setTimeout(() => {
+                    msg.classList.add('hidden');
+                }, 3000);
+            }
+        }
+
+        const toolDetails = {
+            1: { emoji: "📄", title: "Academic Paper Summarizer", desc: "Generate instant summary and key insights from research papers.", type: "pdf" },
+            2: { emoji: "✍️", title: "Lesson Paraphraser & Refiner", desc: "Refine, reorganize, and paraphrase lesson content smoothly.", type: "pdf_text" },
+            3: { emoji: "🤖", title: "Academic Tone Humanizer", desc: "Transform text into natural, easy-to-read academic language.", type: "length_text" },
+            4: { emoji: "📝", title: "Advanced Essay & Notes Writer", desc: "Generate essays and study notes with custom length and style.", type: "essay" },
+            5: { emoji: "💡", title: "Concept & Terminology Explainer", desc: "Receive clear, step-by-step explanations for complex concepts.", type: "text" },
+            6: { emoji: "📚", title: "Quick Reference & Notes Organizer", desc: "Organize study notes and references into structured tables and summaries.", type: "text" },
+            7: { emoji: "📊", title: "Academic Data & Chart Explainer", desc: "Extract scientific trends and conclusions from data or images.", type: "image" },
+            8: { emoji: "❓", title: "Academic Quiz & Flashcards Generator", desc: "Automatically generate self-test quizzes and revision flashcards.", type: "pdf" },
+            9: { emoji: "🔍", title: "Critical Thinking & Analysis Prompt", desc: "Evaluate arguments and uncover critical research questions.", type: "text" },
+            10: { emoji: "⏱️", title: "Study Schedule & Milestone Planner", desc: "Break down large syllabi into daily and weekly milestones.", type: "text" }
+        };
+
+        function openToolModal(id) {
+            activeToolId = id;
+            const tool = toolDetails[id];
+            if (!tool) return;
+
+            document.getElementById('modal-emoji').textContent = tool.emoji;
+            document.getElementById('modal-title').textContent = tool.title;
+            document.getElementById('modal-subtitle').textContent = tool.desc;
+
+            document.getElementById('pdf-upload-zone').classList.add('hidden');
+            document.getElementById('image-upload-zone').classList.add('hidden');
+            document.getElementById('length-options-zone').classList.add('hidden');
+            document.getElementById('style-options-zone').classList.add('hidden');
+            document.getElementById('ai-output-box').classList.add('hidden');
+            document.getElementById('modal-textarea').value = '';
+
+            if (tool.type === 'pdf' || tool.type === 'pdf_text') {
+                document.getElementById('pdf-upload-zone').classList.remove('hidden');
+            }
+            if (tool.type === 'image') {
+                document.getElementById('image-upload-zone').classList.remove('hidden');
+            }
+            if (tool.type === 'length_text' || tool.type === 'essay') {
+                document.getElementById('length-options-zone').classList.remove('hidden');
+            }
+            if (tool.type === 'essay') {
+                document.getElementById('style-options-zone').classList.remove('hidden');
+            }
+
+            document.getElementById('tool-modal').classList.remove('hidden');
+        }
+
+        function closeToolModal() {
+            document.getElementById('tool-modal').classList.add('hidden');
+        }
+
+        function handleFileSelected(input, type) {
+            if (input.files && input.files[0]) {
+                const fileName = input.files[0].name;
+                if (type === 'pdf') {
+                    document.getElementById('pdf-filename').textContent = "Selected: " + fileName;
+                } else if (type === 'image') {
+                    document.getElementById('image-filename').textContent = "Selected: " + fileName;
+                }
+            }
+        }
+
+        function selectLength(length) {
+            selectedLength = length;
+            document.querySelectorAll('.length-btn').forEach(btn => {
+                if (btn.textContent.includes(length)) {
+                    btn.className = "length-btn p-2 text-xs border border-slate-300 dark:border-slate-700 rounded-xl text-center font-medium bg-academicBlue-600 text-white";
+                } else {
+                    btn.className = "length-btn p-2 text-xs border border-slate-300 dark:border-slate-700 rounded-xl text-center font-medium hover:border-academicBlue-500";
+                }
+            });
+        }
+
+        function processAiTool() {
+            const outputBox = document.getElementById('ai-output-box');
+            const outputContent = document.getElementById('ai-output-content');
+            
+            outputBox.classList.remove('hidden');
+            outputContent.textContent = "Analyzing input and generating professional academic response based on tool #" + activeToolId + " (" + selectedLength + " format)...\n\n• Key Finding 1: Comprehensive literature breakdown completed successfully.\n• Key Finding 2: Academic tone optimized according to scientific standards.\n• Conclusion: Ready for integration into your research notes and study plan.";
+        }
+
+        function copyOutputText() {
+            const text = document.getElementById('ai-output-content').textContent;
+            navigator.clipboard.writeText(text);
+            alert("Output copied to clipboard successfully!");
+        }
+    </script>
+</body>
+</html>
