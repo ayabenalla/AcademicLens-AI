@@ -610,7 +610,11 @@
         if (!row) return;
         const title = card.querySelector("h3");
         const desc = card.querySelector("p");
-        const action = card.querySelector("span");
+        const emoji = card.querySelector("span.text-3xl");
+        const action = card.querySelector(".mt-4 span");
+        const originalEmojis = ["📄", "✍️", "🤖", "📝", "💡", "📚", "📊", "❓", "🔍", "⏱️"];
+        // Keep the original card icon and footer divider intact while translating text.
+        if (emoji) emoji.textContent = originalEmojis[Number(card.dataset.tool) - 1] || "📘";
         if (title) title.textContent = row[0];
         if (desc) desc.textContent = "(" + row[1] + ")";
         if (action) action.textContent = row[2];
