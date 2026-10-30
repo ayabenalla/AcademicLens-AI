@@ -264,8 +264,10 @@
       if (!tool) return;
       state.activeTool = Number(id);
       $("modal-emoji").textContent = tool.emoji;
-      $("modal-title").textContent = tool.title;
-      $("modal-subtitle").textContent = tool.desc;
+      const currentLang = $("language-select").value || "en";
+      const localizedTool = (toolTranslations[currentLang] || toolTranslations.en)[Number(id) - 1];
+      $("modal-title").textContent = localizedTool ? localizedTool[0] : tool.title;
+      $("modal-subtitle").textContent = localizedTool ? localizedTool[1] : tool.desc;
       ["pdf-upload-zone","image-upload-zone","length-options-zone","style-options-zone","ai-output-box"].forEach(id => $(id).classList.add("hidden"));
       $("modal-textarea").value = "";
       $("pdf-file").value = "";
@@ -525,8 +527,99 @@
       }
     };
 
+
+    const toolTranslations = {
+      en: [
+        ["Academic Paper Summarizer","Upload research PDFs or paste text to prepare a summary and key insights.","Open Tool & Upload"],
+        ["Lesson Paraphraser & Refiner","Upload a PDF or paste text to refine, reorganize, and paraphrase lesson content.","Open Tool & Upload"],
+        ["Academic Tone Humanizer","Transform drafted text into natural, easy-to-read academic language.","Open Tool & Customize"],
+        ["Advanced Essay & Notes Writer","Prepare essays and study notes with custom length and writing style.","Open Tool & Configure"],
+        ["Concept & Terminology Explainer","Get clear, step-by-step explanations for complex concepts.","Open Tool"],
+        ["Quick Reference & Notes Organizer","Organize study notes, links, and references into structured summaries.","Open Tool"],
+        ["Academic Data & Chart Explainer","Choose charts, diagrams, or images for analysis.","Open Tool & Upload"],
+        ["Academic Quiz & Flashcards Generator","Prepare self-test quizzes and revision flashcards from your lesson.","Open Tool & Generate"],
+        ["Critical Thinking & Analysis Prompt","Evaluate claims and uncover critical research questions.","Open Tool"],
+        ["Study Schedule & Milestone Planner","Break down your syllabus into daily and weekly study milestones.","Open Tool & Plan"]
+      ],
+      ar: [
+        ["ملخّص الأبحاث الأكاديمية","ارفعي بحثاً بصيغة PDF أو الصقي النص للحصول على ملخص وأهم الأفكار.","فتح الأداة ورفع ملف"],
+        ["إعادة صياغة الدروس وتحسينها","ارفعي ملف PDF أو الصقي النص لإعادة تنظيم الدرس وتحسين صياغته.","فتح الأداة ورفع ملف"],
+        ["تحسين الأسلوب الأكاديمي","حوّلي النص إلى صياغة أكاديمية واضحة وسهلة القراءة.","فتح الأداة وتخصيصها"],
+        ["كاتب المقالات والملاحظات المتقدم","أعدّي المقالات وملاحظات الدراسة مع اختيار الطول وأسلوب الكتابة.","فتح الأداة والإعداد"],
+        ["شرح المفاهيم والمصطلحات","احصلي على شروحات واضحة ومتدرجة للمفاهيم المعقدة.","فتح الأداة"],
+        ["منظّم المراجع والملاحظات","نظّمي ملاحظات الدراسة والروابط والمراجع في ملخصات مرتبة.","فتح الأداة"],
+        ["شرح البيانات والرسوم البيانية","اختاري رسوماً بيانية أو مخططات أو صوراً لتحليلها.","فتح الأداة ورفع صورة"],
+        ["إنشاء الاختبارات وبطاقات المراجعة","أنشئي اختبارات ذاتية وبطاقات للمراجعة انطلاقاً من الدرس.","فتح الأداة وإنشاء اختبار"],
+        ["التفكير النقدي والتحليل","قيّمي الأفكار واكتشفي أسئلة بحثية تستحق التفكير.","فتح الأداة"],
+        ["مخطط الدراسة وتتبع الأهداف","قسّمي المقرر إلى أهداف ومراحل يومية وأسبوعية للمراجعة.","فتح الأداة والتخطيط"]
+      ],
+      fr: [
+        ["Résumé d’articles académiques","Importez un PDF ou collez un texte pour préparer un résumé et ses idées clés.","Ouvrir et importer"],
+        ["Reformulation et amélioration des cours","Importez un PDF ou collez un texte pour réorganiser et reformuler le cours.","Ouvrir et importer"],
+        ["Amélioration du ton académique","Transformez votre brouillon en un texte académique naturel et facile à lire.","Ouvrir et personnaliser"],
+        ["Rédacteur avancé de dissertations et notes","Préparez des dissertations et des notes avec une longueur et un style personnalisés.","Ouvrir et configurer"],
+        ["Explication des concepts et termes","Obtenez des explications claires et progressives des concepts complexes.","Ouvrir l’outil"],
+        ["Organisateur de références et de notes","Organisez vos notes, liens et références en résumés structurés.","Ouvrir l’outil"],
+        ["Explication des données et graphiques","Choisissez des graphiques, schémas ou images à analyser.","Ouvrir et importer"],
+        ["Générateur de quiz et fiches de révision","Créez des quiz et des fiches de révision à partir de votre cours.","Ouvrir et générer"],
+        ["Réflexion critique et analyse","Évaluez des arguments et formulez des questions de recherche.","Ouvrir l’outil"],
+        ["Planificateur d’étude et d’objectifs","Répartissez votre programme en objectifs quotidiens et hebdomadaires.","Ouvrir et planifier"]
+      ],
+      es: [
+        ["Resumidor de artículos académicos","Sube un PDF o pega texto para preparar un resumen y sus ideas clave.","Abrir y subir"],
+        ["Parafraseador y mejorador de lecciones","Sube un PDF o pega texto para reorganizar y mejorar la lección.","Abrir y subir"],
+        ["Mejorador del tono académico","Transforma borradores en textos académicos naturales y fáciles de leer.","Abrir y personalizar"],
+        ["Redactor avanzado de ensayos y apuntes","Prepara ensayos y apuntes con longitud y estilo personalizados.","Abrir y configurar"],
+        ["Explicador de conceptos y terminología","Obtén explicaciones claras y paso a paso de conceptos complejos.","Abrir herramienta"],
+        ["Organizador de referencias y apuntes","Organiza apuntes, enlaces y referencias en resúmenes estructurados.","Abrir herramienta"],
+        ["Explicador de datos y gráficos","Elige gráficos, diagramas o imágenes para analizarlos.","Abrir y subir"],
+        ["Generador de cuestionarios y tarjetas","Prepara cuestionarios y tarjetas de repaso a partir de tu lección.","Abrir y generar"],
+        ["Pensamiento crítico y análisis","Evalúa afirmaciones y descubre preguntas de investigación.","Abrir herramienta"],
+        ["Planificador de estudio y objetivos","Divide tu programa en metas diarias y semanales.","Abrir y planificar"]
+      ],
+      zh: [
+        ["学术论文摘要工具","上传研究 PDF 或粘贴文本，整理摘要和关键见解。","打开并上传"],
+        ["课程改写与优化工具","上传 PDF 或粘贴文本，重新组织并改写课程内容。","打开并上传"],
+        ["学术语气润色工具","将草稿转换为自然、易读的学术语言。","打开并自定义"],
+        ["高级论文与笔记写作工具","自定义长度和写作风格，准备论文和学习笔记。","打开并设置"],
+        ["概念与术语解释工具","获取复杂概念的清晰分步解释。","打开工具"],
+        ["参考资料与笔记整理工具","将学习笔记、链接和参考资料整理成结构化摘要。","打开工具"],
+        ["学术数据与图表解释工具","选择图表、示意图或图片进行分析。","打开并上传"],
+        ["测验与记忆卡生成器","根据课程内容创建自测题和复习卡片。","打开并生成"],
+        ["批判性思维与分析提示","评估观点并提出值得研究的问题。","打开工具"],
+        ["学习计划与里程碑规划器","将课程分解为每日和每周学习目标。","打开并规划"]
+      ],
+      ko: [
+        ["학술 논문 요약 도구","연구 PDF를 업로드하거나 텍스트를 붙여 넣어 요약과 핵심 내용을 정리하세요.","열기 및 업로드"],
+        ["수업 내용 바꾸어 쓰기 및 개선","PDF를 업로드하거나 텍스트를 붙여 넣어 수업 내용을 정리하고 바꾸어 쓰세요.","열기 및 업로드"],
+        ["학술 문체 다듬기","초안을 자연스럽고 읽기 쉬운 학술 문장으로 바꾸세요.","열기 및 사용자 지정"],
+        ["고급 에세이 및 노트 작성기","길이와 문체를 설정해 에세이와 학습 노트를 작성하세요.","열기 및 설정"],
+        ["개념 및 용어 설명 도구","복잡한 개념을 명확하고 단계적으로 설명받으세요.","도구 열기"],
+        ["참고자료 및 노트 정리 도구","학습 노트, 링크, 참고자료를 구조화된 요약으로 정리하세요.","도구 열기"],
+        ["학술 데이터 및 차트 설명 도구","분석할 차트, 도표 또는 이미지를 선택하세요.","열기 및 업로드"],
+        ["퀴즈 및 플래시카드 생성기","수업 내용을 바탕으로 자가 테스트와 복습 카드를 만드세요.","열기 및 생성"],
+        ["비판적 사고 및 분석","주장을 평가하고 연구 질문을 찾아보세요.","도구 열기"],
+        ["학습 일정 및 목표 계획기","학습 과정을 일일 및 주간 목표로 나누세요.","열기 및 계획"]
+      ]
+    };
+
+    function updateToolCardTranslations(lang) {
+      const rows = toolTranslations[lang] || toolTranslations.en;
+      document.querySelectorAll(".tool-card[data-tool]").forEach(card => {
+        const row = rows[Number(card.dataset.tool) - 1];
+        if (!row) return;
+        const title = card.querySelector("h3");
+        const desc = card.querySelector("p");
+        const action = card.querySelector("span");
+        if (title) title.textContent = row[0];
+        if (desc) desc.textContent = "(" + row[1] + ")";
+        if (action) action.textContent = row[2];
+      });
+    }
+
     function changeLanguage(lang) {
       const dict = translations[lang] || translations.en;
+      updateToolCardTranslations(lang);
       document.querySelectorAll("[data-i18n]").forEach(el => {
         const key = el.getAttribute("data-i18n");
         if (Object.prototype.hasOwnProperty.call(dict, key)) el.textContent = dict[key];
