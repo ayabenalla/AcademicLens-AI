@@ -84,7 +84,7 @@
       <section class="space-y-2">
         <h3 class="text-sm font-semibold uppercase tracking-wider text-academicBlue-600 dark:text-academicBlue-400 flex items-center gap-2"><i class="fa-solid fa-lightbulb"></i><span data-i18n="help_title">Help & Guidelines</span></h3>
         <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs text-slate-600 dark:text-slate-300 space-y-2 border border-slate-200/60 dark:border-slate-700/50">
-          <p data-i18n="help_step1">1. Select an academic tool card.</p><p data-i18n="help_step2">2. Choose a file or paste your lesson notes.</p><p data-i18n="help_step3">3. Customize the available options.</p><p data-i18n="help_step4">4. Click the action button to view the demo result.</p>
+          <p data-i18n="help_step1">1. Select an academic tool card.</p><p data-i18n="help_step2">2. Choose a file or paste your lesson notes.</p><p data-i18n="help_step3">3. Customize the available options.</p><p data-i18n="help_step4">4. Click the action button to create a local practice result.</p>
         </div>
       </section>
 
@@ -211,10 +211,10 @@
         </div>
         <button id="modal-action-btn" type="button" class="w-full py-3 bg-academicBlue-600 hover:bg-academicBlue-700 text-white rounded-xl text-sm font-bold shadow-lg flex items-center justify-center gap-2"><i class="fa-solid fa-bolt"></i><span id="modal-btn-text">Process Request</span></button>
         <div id="ai-output-box" class="hidden space-y-2 pt-2">
-          <div class="flex items-center justify-between gap-3"><span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider"><i class="fa-solid fa-circle-check"></i> Demonstration Result</span><button id="copy-output-btn" type="button" class="text-[11px] text-academicBlue-600 dark:text-academicBlue-400 font-semibold hover:underline"><i class="fa-solid fa-copy"></i> Copy Output</button></div>
+          <div class="flex items-center justify-between gap-3 flex-wrap"><span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider"><i class="fa-solid fa-circle-check"></i> Local Demo Result</span><div class="flex gap-3"><button id="copy-output-btn" type="button" class="text-[11px] text-academicBlue-600 dark:text-academicBlue-400 font-semibold hover:underline"><i class="fa-solid fa-copy"></i> Copy</button><button id="download-output-btn" type="button" class="text-[11px] text-academicBlue-600 dark:text-academicBlue-400 font-semibold hover:underline"><i class="fa-solid fa-download"></i> Download</button></div></div>
           <div id="ai-output-content" class="p-4 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-line"></div>
         </div>
-        <p class="text-[11px] text-slate-500 dark:text-slate-400">Demo interface: files are selected in your browser and are not uploaded to a server. Real AI processing requires connecting an AI service.</p>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">Local demo: text tools create simple study outputs in your browser. PDF extraction, image understanding, and real AI answers are not connected yet.</p>
       </div>
     </div>
   </div>
@@ -292,34 +292,130 @@
     function processTool() {
       const tool = tools[state.activeTool];
       if (!tool) return;
+
       const lang = $("language-select") ? $("language-select").value : "en";
-      const d = translations[lang] || translations.en;
       const textValue = $("modal-textarea").value.trim();
       const pdf = $("pdf-file").files[0];
       const image = $("image-file").files[0];
+      const needsText = !["image"].includes(tool.type);
+      const isPdfTool = ["pdf", "pdf_text"].includes(tool.type);
 
-      if ((tool.type === "pdf" || tool.type === "pdf_text") && !pdf && !textValue) {
-        alert(d.alert_pdf);
+      if (isPdfTool && !pdf && !textValue) {
+        alert(lang === "ar" ? "اختاري ملف PDF أو ألصقي النص أولاً." : "Please choose a PDF or paste text first.");
         return;
       }
       if (tool.type === "image" && !image) {
-        alert(d.alert_image);
+        alert(lang === "ar" ? "اختاري صورة أولاً." : "Please choose an image first.");
         return;
       }
-      if (["text","length_text","essay"].includes(tool.type) && !textValue) {
-        alert(d.alert_text);
+      if (needsText && !textValue) {
+        alert(lang === "ar" ? "أدخلي نصاً أولاً حتى نقدروا نعالجوه." : "Please enter some text first.");
         $("modal-textarea").focus();
         return;
       }
 
-      const filename = pdf ? pdf.name : image ? image.name : "";
-      const lines = [d.output_ready, "", d.output_tool + tool.title];
-      if (filename) lines.push(d.output_file + filename);
-      lines.push(d.output_length + state.length);
-      if (tool.type === "essay") lines.push(d.output_style + $("style-select").value);
-      if (textValue) lines.push("", d.output_input, textValue);
-      lines.push("", d.output_demo);
-      $("ai-output-content").textContent = lines.join("\\n");
+      const isArabic = lang === "ar";
+      const isFrench = lang === "fr";
+      const tr = (en, ar, fr) => isArabic ? ar : isFrench ? fr : en;
+      const clean = textValue.replace(/\s+/g, " ").trim();
+      const sentences = clean ? (clean.match(/[^.!?؟]+[.!?؟]?/g) || [clean]).map(s => s.trim()).filter(Boolean) : [];
+      const words = clean ? clean.split(/\s+/).filter(Boolean) : [];
+      const limit = state.length === "Short" ? 2 : state.length === "Long" ? 6 : 4;
+      const title = tool.title;
+      let result = "";
+
+      const makeBullets = items => items.map((item, i) => `${i + 1}. ${item}`).join("\n");
+      const selectedSentences = sentences.slice(0, limit);
+      const localNotice = tr(
+        "LOCAL DEMO — This result was prepared in your browser using simple text-processing rules. It is not generated by an AI model.",
+        "نسخة تجريبية محلية — تمت معالجة النص داخل المتصفح بقواعد بسيطة، وليس بواسطة نموذج ذكاء اصطناعي.",
+        "DÉMO LOCALE — Ce résultat est préparé dans votre navigateur avec des règles simples, pas par un modèle d’IA."
+      );
+
+      switch (state.activeTool) {
+        case 1:
+          result = tr("SUMMARY\n", "الملخص\n", "RÉSUMÉ\n") +
+            (selectedSentences.length ? makeBullets(selectedSentences) : tr("No readable text was provided.", "لم يتم إدخال نص قابل للتلخيص.", "Aucun texte lisible fourni.")) +
+            "\n\n" + tr("Key details\n", "معلومات أساسية\n", "Points clés\n") +
+            tr(`Word count: ${words.length}\nSentence count: ${sentences.length}`, `عدد الكلمات: ${words.length}\nعدد الجمل: ${sentences.length}`, `Nombre de mots : ${words.length}\nNombre de phrases : ${sentences.length}`);
+          if (pdf) result += "\n\n" + tr("PDF selected: ", "ملف PDF المختار: ", "PDF sélectionné : ") + pdf.name +
+            "\n" + tr("For this local version, paste the PDF text into the text box; PDF extraction will be added later.", "في هذه النسخة، ألصقي نص PDF في الخانة؛ استخراج النص من الملف سنضيفوه لاحقاً.", "Pour cette version, collez le texte du PDF dans la zone; l’extraction sera ajoutée plus tard.");
+          break;
+        case 2:
+          result = tr("CLEANED & ORGANIZED TEXT\n", "النص المنظم والمنقح\n", "TEXTE NETTOYÉ ET ORGANISÉ\n") +
+            (sentences.length ? sentences.join("\n\n") : clean) +
+            "\n\n" + tr("Tip: review the wording before using it in an assignment.", "نصيحة: راجعي الصياغة قبل استعمال النص في واجب دراسي.", "Conseil : relisez le texte avant de l’utiliser dans un devoir.");
+          break;
+        case 3:
+          result = tr("READABILITY REVIEW\n", "مراجعة سهولة القراءة\n", "RÉVISION DE LA LISIBILITÉ\n") +
+            clean.replace(/\s+([,.;:!?])/g, "$1").replace(/([.!?])([A-Za-zÀ-ÿ])/g, "$1 $2") +
+            "\n\n" + tr("This local tool cleans spacing and punctuation only; it does not truly rewrite or humanize text with AI.", "هذه الأداة المحلية تصلح المسافات وعلامات الترقيم فقط؛ لا تعيد كتابة النص بالذكاء الاصطناعي.", "Cet outil local corrige seulement les espaces et la ponctuation; il ne réécrit pas le texte avec l’IA.");
+          break;
+        case 4:
+          result = tr("ESSAY / NOTES OUTLINE\n", "خطة المقال أو الملاحظات\n", "PLAN DE DISSERTATION / NOTES\n") +
+            tr("1. Introduction\n   - Introduce the topic\n   - State the main question\n\n2. Main section\n   - Explain the key idea\n   - Add evidence or examples\n   - Discuss another perspective\n\n3. Conclusion\n   - Summarize the main points\n   - Give a final insight\n\n", "1. المقدمة\n   - تقديم الموضوع\n   - طرح الإشكالية الرئيسية\n\n2. العرض\n   - شرح الفكرة الأساسية\n   - إضافة أدلة أو أمثلة\n   - مناقشة وجهة نظر أخرى\n\n3. الخاتمة\n   - تلخيص الأفكار الرئيسية\n   - تقديم خلاصة نهائية\n\n", "1. Introduction\n   - Présenter le sujet\n   - Formuler la question principale\n\n2. Développement\n   - Expliquer l’idée centrale\n   - Ajouter des preuves ou exemples\n   - Examiner un autre point de vue\n\n3. Conclusion\n   - Résumer les idées principales\n   - Donner une conclusion finale\n\n") +
+            tr("Your topic: ", "موضوعك: ", "Votre sujet : ") + clean +
+            "\n" + tr("Selected style: ", "الأسلوب المختار: ", "Style choisi : ") + $("style-select").value +
+            "\n" + tr("Selected length: ", "الطول المختار: ", "Longueur choisie : ") + state.length;
+          break;
+        case 5:
+          result = tr("CONCEPT STUDY FRAMEWORK\n", "خطة لفهم المفهوم\n", "CADRE D’ÉTUDE DU CONCEPT\n") +
+            tr("Concept / topic: ", "المفهوم / الموضوع: ", "Concept / sujet : ") + clean +
+            "\n\n" + tr("To understand it, work through these steps:\n1. Write a simple definition.\n2. Identify its main components.\n3. Explain how it works.\n4. Give one practical example.\n5. Compare it with a related concept.\n6. Summarize it in your own words.", "لفهمه، اتبعي هاد المراحل:\n1. اكتبي تعريفاً بسيطاً.\n2. حددي مكوناته الأساسية.\n3. اشرحي كيف يعمل.\n4. أعطي مثالاً تطبيقياً.\n5. قارنيه بمفهوم قريب منه.\n6. لخّصيه بأسلوبك.", "Pour le comprendre :\n1. Écrire une définition simple.\n2. Identifier ses composants.\n3. Expliquer son fonctionnement.\n4. Donner un exemple pratique.\n5. Le comparer à un concept proche.\n6. Le résumer avec vos propres mots.");
+          break;
+        case 6:
+          result = tr("ORGANIZED NOTES\n", "ملاحظات منظمة\n", "NOTES ORGANISÉES\n") +
+            (sentences.length ? makeBullets(sentences) : clean) +
+            "\n\n" + tr(`Total: ${words.length} words in ${sentences.length} points.`, `المجموع: ${words.length} كلمة في ${sentences.length} نقاط.`, `Total : ${words.length} mots en ${sentences.length} points.`);
+          break;
+        case 7:
+          result = tr("IMAGE REVIEW CHECKLIST\n", "قائمة تحليل الصورة\n", "GRILLE D’ANALYSE DE L’IMAGE\n") +
+            tr("Selected image: ", "الصورة المختارة: ", "Image sélectionnée : ") + image.name +
+            "\n\n" + tr("This version can display the selected image but cannot interpret its contents yet. Add your observations in the text box, for example:\n- Chart title\n- Axis labels and units\n- Main values or trends\n- What you want to understand", "هذه النسخة تقدر تختار الصورة ولكن ما زال ما كتفهمش محتواها تلقائياً. كتبي ملاحظاتك في الخانة، مثلاً:\n- عنوان الرسم\n- أسماء المحاور والوحدات\n- القيم أو الاتجاهات الرئيسية\n- شنو بغيتي تفهمي", "Cette version peut sélectionner l’image, mais ne sait pas encore l’interpréter. Ajoutez vos observations :\n- Titre du graphique\n- Axes et unités\n- Valeurs ou tendances\n- Ce que vous souhaitez comprendre");
+          if (clean) result += "\n\n" + tr("Your notes: ", "ملاحظاتك: ", "Vos notes : ") + clean;
+          break;
+        case 8:
+          result = tr("QUICK SELF-TEST\n", "اختبار ذاتي سريع\n", "AUTO-ÉVALUATION\n");
+          if (sentences.length) {
+            result += selectedSentences.map((s, i) => `${i + 1}. ${tr("Explain this idea in your own words: ", "اشرحي هذه الفكرة بأسلوبك: ", "Expliquez cette idée avec vos propres mots : ")}${s}\n   ${tr("Answer: ____________________", "الجواب: ____________________", "Réponse : ____________________")}`).join("\n\n");
+          } else {
+            result += tr("Add lesson text to create practice prompts.", "أضيفي نص الدرس لإنشاء أسئلة للمراجعة.", "Ajoutez le texte du cours pour créer des questions.");
+          }
+          break;
+        case 9:
+          result = tr("CRITICAL THINKING QUESTIONS\n", "أسئلة التفكير النقدي\n", "QUESTIONS DE RÉFLEXION CRITIQUE\n") +
+            tr("Topic: ", "الموضوع: ", "Sujet : ") + clean +
+            "\n\n" + makeBullets([
+              tr("What evidence supports the main claim?", "ما الأدلة التي تدعم الفكرة الرئيسية؟", "Quelles preuves soutiennent l’affirmation principale ?"),
+              tr("What assumptions are being made?", "ما الافتراضات التي يعتمد عليها الطرح؟", "Quelles hypothèses sont faites ?"),
+              tr("Is there another possible explanation?", "هل يوجد تفسير آخر ممكن؟", "Existe-t-il une autre explication possible ?"),
+              tr("What information is missing?", "ما المعلومات الناقصة؟", "Quelles informations manquent ?"),
+              tr("How could the claim be tested?", "كيف يمكن اختبار هذه الفكرة؟", "Comment pourrait-on vérifier cette affirmation ?")
+            ]);
+          break;
+        case 10:
+          result = tr("7-DAY STUDY STARTER PLAN\n", "خطة انطلاق للمذاكرة خلال 7 أيام\n", "PLAN DE RÉVISION SUR 7 JOURS\n") +
+            tr("Subject / topic: ", "المادة / الموضوع: ", "Matière / sujet : ") + clean +
+            "\n\n" + makeBullets([
+              tr("Day 1: List topics and identify difficult points.", "اليوم 1: حددي الدروس والنقاط الصعبة.", "Jour 1 : Lister les sujets et repérer les difficultés."),
+              tr("Day 2: Study the first section and take notes.", "اليوم 2: ادرسي الجزء الأول وخذي ملاحظات.", "Jour 2 : Étudier la première partie et prendre des notes."),
+              tr("Day 3: Study the next section and make examples.", "اليوم 3: ادرسي الجزء التالي وطبقي بأمثلة.", "Jour 3 : Étudier la partie suivante et faire des exemples."),
+              tr("Day 4: Review and create flashcards.", "اليوم 4: راجعي وأنشئي بطاقات للمراجعة.", "Jour 4 : Réviser et créer des fiches."),
+              tr("Day 5: Practice exercises.", "اليوم 5: حلي تمارين تطبيقية.", "Jour 5 : Faire des exercices."),
+              tr("Day 6: Take a short self-test.", "اليوم 6: ديري اختباراً ذاتياً قصيراً.", "Jour 6 : Faire un petit test."),
+              tr("Day 7: Review mistakes and plan the next week.", "اليوم 7: راجعي الأخطاء وخططي للأسبوع التالي.", "Jour 7 : Revoir les erreurs et planifier la semaine suivante.")
+            ]);
+          break;
+        default:
+          result = clean;
+      }
+
+      const meta = tr(
+        `\n\n---\nTool: ${title}\nInput words: ${words.length}\n`,
+        `\n\n---\nالأداة: ${title}\nعدد كلمات الإدخال: ${words.length}\n`,
+        `\n\n---\nOutil : ${title}\nNombre de mots saisis : ${words.length}\n`
+      );
+      $("ai-output-content").textContent = result + meta + "\n" + localNotice;
       $("ai-output-box").classList.remove("hidden");
       $("ai-output-box").scrollIntoView({behavior:"smooth",block:"nearest"});
     }
@@ -344,6 +440,19 @@
       }
     }
 
+    function downloadOutput() {
+      const content = $("ai-output-content").textContent;
+      const blob = new Blob([content], {type:"text/plain;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "AcademicLens-AI-result.txt";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
     function setRating(value) {
       state.rating = value;
       document.querySelectorAll("[data-rating]").forEach(button => {
@@ -356,7 +465,7 @@
       en: {
         about_title:"About the App", about_desc:"AcademicLens-AI is an academic study and research assistant designed to help students analyze papers, summarize lessons, and organize their work.",
         settings_title:"Settings", lang_label:"Language", theme_label:"Dark Mode", help_title:"Help & Guidelines",
-        help_step1:"1. Select an academic tool card.", help_step2:"2. Choose a file or paste your lesson notes.", help_step3:"3. Customize the available options.", help_step4:"4. Click the action button to view the demo result.",
+        help_step1:"1. Select an academic tool card.", help_step2:"2. Choose a file or paste your lesson notes.", help_step3:"3. Customize the available options.", help_step4:"4. Click the action button to create a local practice result.",
         rate_title:"Rate & Feedback", submit_btn:"Submit Feedback", tagline:'"Your intelligent companion for seamless academic studies and research analysis."',
         sub_tagline:"Empowering students, researchers, and educators with dedicated AI-driven academic utilities.", dash_title:"Academic Tools Dashboard",
         dash_sub:"Select any specialized card below to analyze papers, refine lessons, or organize research.",
@@ -453,6 +562,7 @@
     $("tool-modal").addEventListener("click", event => { if (event.target === $("tool-modal")) closeModal(); });
     $("modal-action-btn").addEventListener("click", processTool);
     $("copy-output-btn").addEventListener("click", copyOutput);
+    if ($("download-output-btn")) $("download-output-btn").addEventListener("click", downloadOutput);
     $("language-select").addEventListener("change", event => changeLanguage(event.target.value));
     changeLanguage($("language-select").value);
     $("pdf-file").addEventListener("change", event => { const d = translations[$("language-select").value] || translations.en; const f = event.target.files[0]; $("pdf-filename").textContent = f ? d.selected + f.name : d.no_pdf; });
