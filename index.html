@@ -289,38 +289,86 @@
       document.body.style.overflow = $("sidebar").classList.contains("sidebar-open") ? "hidden" : "";
     }
 
-    function processTool() {
+    async function processTool() {
       const tool = tools[state.activeTool];
       if (!tool) return;
+
       const textValue = $("modal-textarea").value.trim();
       const pdf = $("pdf-file").files[0];
       const image = $("image-file").files[0];
 
-      if ((tool.type === "pdf" || tool.type === "pdf_text") && !pdf && !textValue) {
-        alert("Please choose a PDF file or enter some text first.");
-        return;
-      }
-      if (tool.type === "image" && !image) {
-        alert("Please choose an image first.");
-        return;
-      }
-      if (["text","length_text","essay"].includes(tool.type) && !textValue) {
-        alert("Please enter your text or topic first.");
-        $("modal-textarea").focus();
+      if (!textValue && !pdf && !image) {
+        alert("Please enter text or select a file first.");
         return;
       }
 
-      const filename = pdf ? pdf.name : image ? image.name : "";
-      $("ai-output-content").textContent =
-        "Your request is ready for processing.\n\n" +
-        "Tool: " + tool.title + "\n" +
-        (filename ? "Selected file: " + filename + "\n" : "") +
-        "Response length: " + state.length + "\n" +
-        (tool.type === "essay" ? "Writing style: " + $("style-select").value + "\n" : "") +
-        (textValue ? "\nYour input:\n" + textValue + "\n" : "\n") +
-        "\nThis is a demonstration only. No AI model has processed this content yet. Connect a secure AI backend to generate a real answer.";
+      // PDF and image reading will be connected in the next step.
+      if (pdf || image) {
+        alert("File reading is not connected yet. For now, please paste the text from your document into the text box.");
+        return;
+      }
+
+      const prompts = {
+        1: "Summarize the following academic paper. Give its main objective, methodology, key findings, conclusion, and important insights. Do not give instructions about how to summarize it.\n\n",
+        2: "Rewrite and refine the following lesson. Preserve all important information, improve clarity and organization, and explain difficult points. Return the improved lesson itself.\n\n",
+        3: "Rewrite the following text in natural, clear, human-sounding academic language. Preserve its original meaning.\n\n",
+        4: "Write a complete academic essay or set of study notes about the following topic. Length: " + state.length + ". Style: " + $("style-select").value + ". Include an introduction, organized body, and conclusion where appropriate.\n\n",
+        5: "Explain the following concept directly and clearly. Define it, explain how it works, give examples, and clarify difficult terms. Do not merely provide steps for explaining it.\n\n",
+        6: "Organize the following notes into clear headings, key points, definitions, and a concise reference summary. Preserve important details.\n\n",
+        7: "Analyze the following data or description. Explain the main patterns, comparisons, trends, and conclusions.\n\n",
+        8: "Create a useful academic quiz from the following lesson, with multiple-choice questions, correct answers, explanations, and revision flashcards.\n\n",
+        9: "Critically analyze the following topic or argument. Identify assumptions, strengths, weaknesses, evidence, and meaningful research questions.\n\n",
+        10: "Create a realistic study schedule based on the following subjects, topics, and deadlines. Organize it into daily and weekly tasks with milestones.\n\n"
+      };
+
+      const prompt = (prompts[state.activeTool] || "Help with the following academic request:\n\n")
+        + textValue
+        + "\n\nResponse length: " + state.length
+        + ". Answer directly in the same language as the input.";
+
+      const button = $("modal-action-btn");
+      const buttonText = $("modal-btn-text");
+
+      button.disabled = true;
+      buttonText.textContent = "Gemini is thinking...";
+
       $("ai-output-box").classList.remove("hidden");
-      $("ai-output-box").scrollIntoView({behavior:"smooth",block:"nearest"});
+      $("ai-output-content").textContent = "Please wait. Your request is being processed by Gemini AI...";
+
+      try {
+        const result = await fetch(
+          "https://academiclens-ai.benallaaya760.workers.dev",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt })
+          }
+        );
+
+        const data = await result.json();
+
+        if (!result.ok) {
+          throw new Error(data.error || "AI request failed. Please try again.");
+        }
+
+        if (!data.response) {
+          throw new Error("Gemini returned an empty response.");
+        }
+
+        $("ai-output-content").textContent = data.response;
+        $("ai-output-box").scrollIntoView({
+          behavior: "smooth",
+          block: "nearest"
+        });
+
+      } catch (error) {
+        $("ai-output-content").textContent =
+          "Error: " + error.message +
+          "\n\nPlease check your connection and try again.";
+      } finally {
+        button.disabled = false;
+        buttonText.textContent = "Process Request";
+      }
     }
 
     async function copyOutput() {
