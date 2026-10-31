@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#059669">
+  <title>AcademicLens-AI 🍃</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            academicBlue: {
+              50:'#eff6ff',100:'#dbeafe',500:'#3b82f6',600:'#2563eb',
+              700:'#1d4ed8',800:'#1e40af',900:'#1e3a8a'
+            },
+            softGreen: {50:'#f0fdf4',100:'#dcfce7',200:'#bbf7d0',light:'#e8f5e9',darkCard:'#0f291e'}
+          },
+          fontFamily: {
+            sans: ['Inter','system-ui','-apple-system','BlinkMacSystemFont','Segoe UI','Roboto','sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { -webkit-tap-highlight-color: transparent; }
+    body { min-height:100vh; }
+    button, [role="button"], .tool-card { touch-action: manipulation; }
+    button:focus-visible, .tool-card:focus-visible, select:focus-visible {
+      outline: 3px solid #60a5fa; outline-offset: 3px;
+    }
+    ::-webkit-scrollbar { width:6px; height:6px; }
+    ::-webkit-scrollbar-track { background:rgba(0,0,0,.05); }
+    ::-webkit-scrollbar-thumb { background:#2563eb; border-radius:9999px; }
+    .backdrop-blur-custom { backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+    .card-hover-effect { transition:transform .25s ease,box-shadow .25s ease; }
+    @media (hover:hover) {
+      .card-hover-effect:hover { transform:translateY(-3px); box-shadow:0 12px 24px -10px rgba(37,99,235,.25); }
+    }
+    .sidebar-open { transform:translateX(0) !important; }
+    #sidebar-backdrop { touch-action: manipulation; }
+    #tool-modal { overscroll-behavior:contain; }
+    #tool-modal .modal-panel { max-height:90dvh; }
+    @media (max-width:640px) {
+      #tool-modal { align-items:flex-end; padding:0; }
+      #tool-modal .modal-panel { max-height:92dvh; border-radius:1.5rem 1.5rem 0 0; }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans min-h-screen flex flex-col transition-colors duration-300">
+
+  <div id="sidebar-backdrop" class="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/70 z-40 hidden backdrop-blur-sm" aria-hidden="true"></div>
+
+  <aside id="sidebar" class="fixed top-0 left-0 w-80 max-w-[85vw] h-full bg-white dark:bg-slate-900 z-50 -translate-x-full transition-transform duration-300 ease-in-out shadow-2xl flex flex-col border-r border-slate-200 dark:border-slate-800" aria-label="Sidebar" aria-hidden="true">
+    <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between bg-emerald-50/50 dark:bg-emerald-950/20">
+      <div class="flex items-center space-x-2"><span class="text-2xl">🍃</span><span class="font-bold text-lg text-emerald-600 dark:text-emerald-400">AcademicLens-AI</span></div>
+      <button id="close-sidebar-btn" type="button" class="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg" aria-label="Close menu"><i class="fa-solid fa-xmark text-xl"></i></button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-5 space-y-6">
+      <section class="space-y-2">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-academicBlue-600 dark:text-academicBlue-400 flex items-center gap-2"><i class="fa-solid fa-circle-info"></i><span data-i18n="about_title">About the App</span></h3>
+        <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs text-slate-600 dark:text-slate-300 leading-relaxed border border-slate-200/60 dark:border-slate-700/50" data-i18n="about_desc">AcademicLens-AI is an academic study and research assistant designed to help students analyze papers, summarize lessons, and organize their work.</div>
+      </section>
+
+      <section class="space-y-3">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-academicBlue-600 dark:text-academicBlue-400 flex items-center gap-2"><i class="fa-solid fa-gear"></i><span data-i18n="settings_title">Settings</span></h3>
+        <div class="space-y-1">
+          <label for="language-select" class="text-xs font-medium text-slate-700 dark:text-slate-300" data-i18n="lang_label">Language / اللغة</label>
+          <select id="language-select" class="w-full text-xs p-2.5 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg text-slate-800 dark:text-slate-200">
+            <option value="en">English</option><option value="ar">العربية</option><option value="fr">Français</option><option value="es">Español</option><option value="zh">中文</option><option value="ko">한국어</option>
+          </select>
+        </div>
+        <div class="flex items-center justify-between p-2.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl border border-slate-200/60 dark:border-slate-700/50">
+          <span class="text-xs font-medium text-slate-700 dark:text-slate-300" data-i18n="theme_label">Dark Mode / الوضع الليلي</span>
+          <button id="sidebar-theme-btn" type="button" class="p-2 rounded-lg bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-amber-300" aria-label="Toggle dark mode"><i id="sidebar-theme-icon" class="fa-solid fa-moon"></i></button>
+        </div>
+      </section>
+
+      <section class="space-y-2">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-academicBlue-600 dark:text-academicBlue-400 flex items-center gap-2"><i class="fa-solid fa-lightbulb"></i><span data-i18n="help_title">Help & Guidelines</span></h3>
+        <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs text-slate-600 dark:text-slate-300 space-y-2 border border-slate-200/60 dark:border-slate-700/50">
+          <p data-i18n="help_step1">1. Select an academic tool card.</p><p data-i18n="help_step2">2. Choose a file or paste your lesson notes.</p><p data-i18n="help_step3">3. Customize the available options.</p><p data-i18n="help_step4">4. Click the action button to create a local practice result.</p>
+        </div>
+      </section>
+
+      <section class="space-y-2">
+        <h3 class="text-sm font-semibold uppercase tracking-wider text-academicBlue-600 dark:text-academicBlue-400 flex items-center gap-2"><i class="fa-solid fa-star"></i><span data-i18n="rate_title">Rate & Feedback</span></h3>
+        <div class="p-3.5 bg-slate-50 dark:bg-slate-800/60 rounded-xl text-xs space-y-3 border border-slate-200/60 dark:border-slate-700/50">
+          <div class="flex items-center justify-center gap-2 text-amber-400 text-lg" id="star-rating" aria-label="Rate the app">
+            <button type="button" data-rating="1" aria-label="1 star"><i class="fa-regular fa-star"></i></button>
+            <button type="button" data-rating="2" aria-label="2 stars"><i class="fa-regular fa-star"></i></button>
+            <button type="button" data-rating="3" aria-label="3 stars"><i class="fa-regular fa-star"></i></button>
+            <button type="button" data-rating="4" aria-label="4 stars"><i class="fa-regular fa-star"></i></button>
+            <button type="button" data-rating="5" aria-label="5 stars"><i class="fa-regular fa-star"></i></button>
+          </div>
+          <textarea id="feedback-text" rows="2" placeholder="Leave feedback or suggestions..." class="w-full p-2 text-xs bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg"></textarea>
+          <button id="submit-feedback-btn" type="button" class="w-full py-2 bg-academicBlue-600 hover:bg-academicBlue-700 text-white rounded-lg text-xs font-semibold" data-i18n="submit_btn">Submit Feedback</button>
+          <p id="feedback-msg" class="hidden text-emerald-600 dark:text-emerald-400 text-[11px] text-center font-medium">Thank you for your feedback!</p>
+        </div>
+      </section>
+    </div>
+    <div class="p-4 border-t border-slate-200 dark:border-slate-800 text-center text-[11px] text-slate-400">AcademicLens-AI v2.6 • Academic Portal</div>
+  </aside>
+
+  <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3 sm:gap-4">
+        <button id="open-sidebar-btn" type="button" class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800" title="Open sidebar" aria-label="Open menu" aria-expanded="false"><i class="fa-solid fa-bars text-xl sm:text-2xl"></i></button>
+        <div class="flex items-center gap-2"><span class="text-2xl sm:text-3xl">🍃</span><h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-emerald-600 dark:text-emerald-400">AcademicLens-AI</h1></div>
+      </div>
+      <button id="nav-theme-btn" type="button" class="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-amber-300 hover:bg-slate-200 dark:hover:bg-slate-700 text-lg" title="Toggle dark mode" aria-label="Toggle dark mode"><span id="nav-theme-icon">🌜</span></button>
+    </div>
+  </header>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <section class="bg-gradient-to-r from-emerald-600 via-academicBlue-600 to-indigo-700 rounded-3xl p-6 sm:p-10 text-white shadow-xl relative overflow-hidden">
+      <div class="absolute -right-10 -bottom-10 opacity-15 pointer-events-none text-9xl font-extrabold select-none">🎓</div>
+      <div class="relative z-10 max-w-3xl space-y-3">
+        <span class="inline-block px-3 py-1 bg-white/20 text-xs sm:text-sm font-semibold rounded-full uppercase tracking-wider text-emerald-100">Academic AI Portal</span>
+        <p class="text-lg sm:text-2xl md:text-3xl font-bold leading-relaxed sm:leading-snug" data-i18n="tagline">"Your intelligent companion for seamless academic studies and research analysis."</p>
+        <p class="text-xs sm:text-sm text-emerald-100/90" data-i18n="sub_tagline">Empowering students, researchers, and educators with dedicated AI-driven academic utilities.</p>
+      </div>
+    </section>
+
+    <div class="flex items-center justify-between gap-3 border-b border-slate-200 dark:border-slate-800 pb-4">
+      <div><h2 class="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100" data-i18n="dash_title">Academic Tools Dashboard</h2><p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1" data-i18n="dash_sub">Select any specialized card below to analyze papers, refine lessons, or organize research.</p></div>
+      <span class="hidden sm:inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-academicBlue-100 text-academicBlue-800 dark:bg-academicBlue-950 dark:text-academicBlue-300" data-i18n="active_tools">10 Active Tools</span>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6" id="tools-grid">
+      <div class="tool-card card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md group" role="button" tabindex="0" data-tool="1">
+        <div class="space-y-3"><div class="flex items-center gap-3"><span class="text-3xl">📄</span><h3 class="text-lg font-bold text-black dark:text-white">Academic Paper Summarizer</h3></div><p class="text-xs sm:text-sm text-black dark:text-slate-200 leading-relaxed">(Upload research PDFs or paste text to prepare a summary and key insights.)</p></div><div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold"><span>Open Tool & Upload</span><i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="tool-card card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md group" role="button" tabindex="0" data-tool="2">
+        <div class="space-y-3"><div class="flex items-center gap-3"><span class="text-3xl">✍️</span><h3 class="text-lg font-bold text-black dark:text-white">Lesson Paraphraser & Refiner</h3></div><p class="text-xs sm:text-sm text-black dark:text-slate-200 leading-relaxed">(Upload a PDF or paste text to refine, reorganize, and paraphrase lesson content.)</p></div><div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold"><span>Open Tool & Upload</span><i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="tool-card card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md group" role="button" tabindex="0" data-tool="3">
+        <div class="space-y-3"><div class="flex items-center gap-3"><span class="text-3xl">🤖</span><h3 class="text-lg font-bold text-black dark:text-white">Academic Tone Humanizer</h3></div><p class="text-xs sm:text-sm text-black dark:text-slate-200 leading-relaxed">(Transform drafted text into natural, easy-to-read academic language.)</p></div><div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold"><span>Open Tool & Customize</span><i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="tool-card card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md group" role="button" tabindex="0" data-tool="4">
+        <div class="space-y-3"><div class="flex items-center gap-3"><span class="text-3xl">📝</span><h3 class="text-lg font-bold text-black dark:text-white">Advanced Essay & Notes Writer</h3></div><p class="text-xs sm:text-sm text-black dark:text-slate-200 leading-relaxed">(Prepare essays and study notes with custom length and writing style.)</p></div><div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold"><span>Open Tool & Configure</span><i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="tool-card card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md group" role="button" tabindex="0" data-tool="5">
+        <div class="space-y-3"><div class="flex items-center gap-3"><span class="text-3xl">💡</span><h3 class="text-lg font-bold text-black dark:text-white">Concept & Terminology Explainer</h3></div><p class="text-xs sm:text-sm text-black dark:text-slate-200 leading-relaxed">(Get clear, step-by-step explanations for complex concepts.)</p></div><div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold"><span>Open Tool</span><i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="tool-card card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md group" role="button" tabindex="0" data-tool="6">
+        <div class="space-y-3"><div class="flex items-center gap-3"><span class="text-3xl">📚</span><h3 class="text-lg font-bold text-black dark:text-white">Quick Reference & Notes Organizer</h3></div><p class="text-xs sm:text-sm text-black dark:text-slate-200 leading-relaxed">(Organize study notes, links, and references into structured summaries.)</p></div><div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold"><span>Open Tool</span><i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="tool-card card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md group" role="button" tabindex="0" data-tool="7">
+        <div class="space-y-3"><div class="flex items-center gap-3"><span class="text-3xl">📊</span><h3 class="text-lg font-bold text-black dark:text-white">Academic Data & Chart Explainer</h3></div><p class="text-xs sm:text-sm text-black dark:text-slate-200 leading-relaxed">(Choose charts, diagrams, or images for analysis.)</p></div><div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold"><span>Open Tool & Upload</span><i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="tool-card card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md group" role="button" tabindex="0" data-tool="8">
+        <div class="space-y-3"><div class="flex items-center gap-3"><span class="text-3xl">❓</span><h3 class="text-lg font-bold text-black dark:text-white">Academic Quiz & Flashcards Generator</h3></div><p class="text-xs sm:text-sm text-black dark:text-slate-200 leading-relaxed">(Prepare self-test quizzes and revision flashcards from your lesson.)</p></div><div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold"><span>Open Tool & Generate</span><i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="tool-card card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md group" role="button" tabindex="0" data-tool="9">
+        <div class="space-y-3"><div class="flex items-center gap-3"><span class="text-3xl">🔍</span><h3 class="text-lg font-bold text-black dark:text-white">Critical Thinking & Analysis Prompt</h3></div><p class="text-xs sm:text-sm text-black dark:text-slate-200 leading-relaxed">(Evaluate claims and uncover critical research questions.)</p></div><div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold"><span>Open Tool</span><i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+      <div class="tool-card card-hover-effect cursor-pointer border-2 border-academicBlue-600 rounded-2xl bg-softGreen-light dark:bg-softGreen-darkCard p-6 flex flex-col justify-between shadow-md relative overflow-hidden group" role="button" tabindex="0" data-tool="10">
+        <div class="space-y-3"><div class="flex items-center gap-3"><span class="text-3xl">⏱️</span><h3 class="text-lg font-bold text-black dark:text-white">Study Schedule & Milestone Planner</h3></div><p class="text-xs sm:text-sm text-black dark:text-slate-200 leading-relaxed">(Break down your syllabus into daily and weekly study milestones.)</p></div><div class="mt-4 pt-3 border-t border-emerald-200/60 dark:border-emerald-900/50 flex items-center justify-between text-xs text-academicBlue-700 dark:text-emerald-400 font-semibold"><span>Open Tool & Plan</span><i class="fa-solid fa-arrow-right"></i></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 py-6 mt-12">
+    <div class="max-w-7xl mx-auto px-4 text-center space-y-2"><p class="text-xs text-slate-500 dark:text-slate-400">AcademicLens-AI • Tailored for Lessons & Scientific Research</p><p class="text-[11px] text-slate-400 dark:text-slate-500">© 2026 AcademicLens-AI. All rights reserved.</p></div>
+  </footer>
+
+  <div id="tool-modal" class="fixed inset-0 z-[60] hidden items-center justify-center p-4 sm:p-6 backdrop-blur-custom bg-slate-900/60 dark:bg-slate-950/80" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-panel bg-white dark:bg-slate-900 border-2 border-academicBlue-600 rounded-3xl w-full max-w-3xl flex flex-col shadow-2xl overflow-hidden">
+      <div class="p-5 bg-softGreen-light dark:bg-softGreen-darkCard border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-3 min-w-0"><span id="modal-emoji" class="text-3xl">📄</span><div class="min-w-0"><h3 id="modal-title" class="text-lg font-bold text-black dark:text-white">Tool Name</h3><p id="modal-subtitle" class="text-xs text-black/80 dark:text-slate-300">Tool Description</p></div></div>
+        <button id="close-modal-btn" type="button" class="p-2 text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 rounded-lg" aria-label="Close dialog"><i class="fa-solid fa-xmark text-xl"></i></button>
+      </div>
+      <div class="p-5 sm:p-6 overflow-y-auto space-y-5 flex-1">
+        <div id="pdf-upload-zone" class="hidden space-y-1">
+          <label for="pdf-file" id="pdf-upload-label" class="text-xs font-semibold text-slate-700 dark:text-slate-300"><i class="fa-solid fa-file-pdf text-red-500 mr-1"></i> Upload Research PDF Paper</label>
+          <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+            <label for="pdf-file" id="pdf-pick-label" class="inline-flex cursor-pointer items-center rounded-lg bg-academicBlue-600 px-4 py-3 text-sm font-semibold text-white hover:bg-academicBlue-700">Choose PDF file</label><input id="pdf-file" type="file" accept="application/pdf,.pdf" class="sr-only">
+            <p id="pdf-filename" class="text-xs text-slate-600 dark:text-slate-400 mt-2">No file selected</p>
+          </div>
+        </div>
+        <div id="image-upload-zone" class="hidden space-y-1">
+          <label for="image-file" id="image-upload-label" class="text-xs font-semibold text-slate-700 dark:text-slate-300"><i class="fa-solid fa-image text-emerald-500 mr-1"></i> Upload Lesson Diagram or Chart Image</label>
+          <div class="border-2 border-dashed border-slate-300 dark:border-slate-700 rounded-xl p-4 text-center hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+            <label for="image-file" id="image-pick-label" class="inline-flex cursor-pointer items-center rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-700">Choose image</label><input id="image-file" type="file" accept="image/*" class="sr-only">
+            <p id="image-filename" class="text-xs text-slate-600 dark:text-slate-400 mt-2">No image selected</p>
+          </div>
+        </div>
+        <div id="text-input-zone" class="space-y-1">
+          <label id="text-input-label" for="modal-textarea" class="text-xs font-semibold text-slate-700 dark:text-slate-300">Input Lesson Text / Research Topic</label>
+          <textarea id="modal-textarea" rows="4" placeholder="Paste your text or enter topic here..." class="w-full p-3 text-xs sm:text-sm bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100"></textarea>
+        </div>
+        <div id="length-options-zone" class="hidden space-y-1">
+          <label class="text-xs font-semibold text-slate-700 dark:text-slate-300">Select Response / Essay Length</label>
+          <div class="grid grid-cols-3 gap-3">
+            <button type="button" data-length="Short" class="length-btn p-2 text-xs border border-slate-300 dark:border-slate-700 rounded-xl font-medium">Short (قصير)</button>
+            <button type="button" data-length="Medium" class="length-btn p-2 text-xs border border-slate-300 dark:border-slate-700 rounded-xl font-medium bg-academicBlue-600 text-white">Medium (متوسط)</button>
+            <button type="button" data-length="Long" class="length-btn p-2 text-xs border border-slate-300 dark:border-slate-700 rounded-xl font-medium">Long (طويل)</button>
+          </div>
+        </div>
+        <div id="style-options-zone" class="hidden space-y-1">
+          <label for="style-select" class="text-xs font-semibold text-slate-700 dark:text-slate-300">Select Writing Style / الأسلوب</label>
+          <select id="style-select" class="w-full p-2.5 text-xs bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-900 dark:text-slate-100">
+            <option value="Analytical">Analytical (تحليلي)</option><option value="Narrative">Narrative (سردي)</option><option value="Argumentative">Argumentative (جدلي)</option><option value="Descriptive">Descriptive (وصفي)</option>
+          </select>
+        </div>
+        <button id="modal-action-btn" type="button" class="w-full py-3 bg-academicBlue-600 hover:bg-academicBlue-700 text-white rounded-xl text-sm font-bold shadow-lg flex items-center justify-center gap-2"><i class="fa-solid fa-bolt"></i><span id="modal-btn-text">Process Request</span></button>
+        <div id="ai-output-box" class="hidden space-y-2 pt-2">
+          <div class="flex items-center justify-between gap-3 flex-wrap"><span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider"><i class="fa-solid fa-circle-check"></i> Local Demo Result</span><div class="flex gap-3"><button id="copy-output-btn" type="button" class="text-[11px] text-academicBlue-600 dark:text-academicBlue-400 font-semibold hover:underline"><i class="fa-solid fa-copy"></i> Copy</button><button id="download-output-btn" type="button" class="text-[11px] text-academicBlue-600 dark:text-academicBlue-400 font-semibold hover:underline"><i class="fa-solid fa-download"></i> Download</button></div></div>
+          <div id="ai-output-content" class="p-4 bg-slate-100 dark:bg-slate-800/80 rounded-2xl border border-slate-200 dark:border-slate-700 text-xs sm:text-sm leading-relaxed text-slate-800 dark:text-slate-200 whitespace-pre-line"></div>
+        </div>
+        <p class="text-[11px] text-slate-500 dark:text-slate-400">Local demo: text tools create simple study outputs in your browser. PDF extraction, image understanding, and real AI answers are not connected yet.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  (() => {
+    "use strict";
+    const $ = id => document.getElementById(id);
+    const state = { dark: false, activeTool: null, length: "Medium", rating: 0 };
+
+    const tools = {
+      1:{emoji:"📄",title:"Academic Paper Summarizer",desc:"Generate summaries and key insights from research papers.",type:"pdf"},
+      2:{emoji:"✍️",title:"Lesson Paraphraser & Refiner",desc:"Refine, reorganize, and paraphrase lesson content.",type:"pdf_text"},
+      3:{emoji:"🤖",title:"Academic Tone Humanizer",desc:"Transform text into clear academic language.",type:"length_text"},
+      4:{emoji:"📝",title:"Advanced Essay & Notes Writer",desc:"Prepare essays and study notes with custom options.",type:"essay"},
+      5:{emoji:"💡",title:"Concept & Terminology Explainer",desc:"Get step-by-step explanations of complex concepts.",type:"text"},
+      6:{emoji:"📚",title:"Quick Reference & Notes Organizer",desc:"Organize notes and references.",type:"text"},
+      7:{emoji:"📊",title:"Academic Data & Chart Explainer",desc:"Explore charts, diagrams, and scientific data.",type:"image"},
+      8:{emoji:"❓",title:"Academic Quiz & Flashcards Generator",desc:"Prepare quizzes and revision flashcards.",type:"pdf"},
+      9:{emoji:"🔍",title:"Critical Thinking & Analysis Prompt",desc:"Evaluate arguments and research questions.",type:"text"},
+      10:{emoji:"⏱️",title:"Study Schedule & Milestone Planner",desc:"Break your syllabus into manageable study milestones.",type:"text"}
+    };
+
+    function setDarkMode(on) {
+      state.dark = on;
+      document.documentElement.classList.toggle("dark", on);
+      if ($("nav-theme-icon")) $("nav-theme-icon").textContent = on ? "☀️" : "🌜";
+      if ($("sidebar-theme-icon")) $("sidebar-theme-icon").className = on ? "fa-solid fa-sun" : "fa-solid fa-moon";
+      try { localStorage.setItem("academicLensDarkMode", on ? "true" : "false"); } catch (_) {}
+    }
+
+    function toggleDarkMode() { setDarkMode(!document.documentElement.classList.contains("dark")); }
+
+    function toggleSidebar(force) {
+      const sidebar = $("sidebar"), backdrop = $("sidebar-backdrop"), trigger = $("open-sidebar-btn");
+      const open = typeof force === "boolean" ? force : sidebar.classList.contains("-translate-x-full");
+      sidebar.classList.toggle("-translate-x-full", !open);
+      sidebar.classList.toggle("sidebar-open", open);
+      backdrop.classList.toggle("hidden", !open);
+      sidebar.setAttribute("aria-hidden", String(!open));
+      trigger.setAttribute("aria-expanded", String(open));
+      document.body.style.overflow = open || !$("tool-modal").classList.contains("hidden") ? "hidden" : "";
+    }
+
+    function openModal(id) {
+      const tool = tools[id], modal = $("tool-modal");
+      if (!tool) return;
+      state.activeTool = Number(id);
+      $("modal-emoji").textContent = tool.emoji;
+      const currentLang = $("language-select").value || "en";
+      const localizedTool = (toolTranslations[currentLang] || toolTranslations.en)[Number(id) - 1];
+      $("modal-title").textContent = localizedTool ? localizedTool[0] : tool.title;
+      $("modal-subtitle").textContent = localizedTool ? localizedTool[1] : tool.desc;
+      ["pdf-upload-zone","image-upload-zone","length-options-zone","style-options-zone","ai-output-box"].forEach(id => $(id).classList.add("hidden"));
+      $("modal-textarea").value = "";
+      $("pdf-file").value = "";
+      $("image-file").value = "";
+      const currentDict = translations[currentLang] || translations.en;
+      $("pdf-filename").textContent = currentDict.no_pdf;
+      $("image-filename").textContent = currentDict.no_image;
+      if (tool.type === "pdf" || tool.type === "pdf_text") $("pdf-upload-zone").classList.remove("hidden");
+      if (tool.type === "image") $("image-upload-zone").classList.remove("hidden");
+      if (tool.type === "length_text" || tool.type === "essay") $("length-options-zone").classList.remove("hidden");
+      if (tool.type === "essay") $("style-options-zone").classList.remove("hidden");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+      document.body.style.overflow = "hidden";
+      $("close-modal-btn").focus({preventScroll:true});
+    }
+
+    function closeModal() {
+      const modal = $("tool-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      document.body.style.overflow = $("sidebar").classList.contains("sidebar-open") ? "hidden" : "";
+    }
+
+    function processTool() {
+      const tool = tools[state.activeTool];
+      if (!tool) return;
+
+      const lang = $("language-select") ? $("language-select").value : "en";
+      const textValue = $("modal-textarea").value.trim();
+      const pdf = $("pdf-file").files[0];
+      const image = $("image-file").files[0];
+      const needsText = !["image"].includes(tool.type);
+      const isPdfTool = ["pdf", "pdf_text"].includes(tool.type);
+
+      if (isPdfTool && !pdf && !textValue) {
+        alert(translations[lang].alert_pdf);
+        return;
+      }
+      if (tool.type === "image" && !image) {
+        alert(translations[lang].alert_image);
+        return;
+      }
+      if (needsText && !textValue) {
+        alert(translations[lang].alert_text);
+        $("modal-textarea").focus();
+        return;
+      }
+
+      const isArabic = lang === "ar";
+      const isFrench = lang === "fr";
+      const tr = (en, ar, fr) => isArabic ? ar : isFrench ? fr : en;
+      const clean = textValue.replace(/\s+/g, " ").trim();
+      const sentences = clean ? (clean.match(/[^.!?؟]+[.!?؟]?/g) || [clean]).map(s => s.trim()).filter(Boolean) : [];
+      const words = clean ? clean.split(/\s+/).filter(Boolean) : [];
+      const limit = state.length === "Short" ? 2 : state.length === "Long" ? 6 : 4;
+      const title = tool.title;
+      let result = "";
+
+      const makeBullets = items => items.map((item, i) => `${i + 1}. ${item}`).join("\n");
+      const selectedSentences = sentences.slice(0, limit);
+      const localNotice = tr(
+        "LOCAL DEMO — This result was prepared in your browser using simple text-processing rules. It is not generated by an AI model.",
+        "نسخة تجريبية محلية — تمت معالجة النص داخل المتصفح بقواعد بسيطة، وليس بواسطة نموذج ذكاء اصطناعي.",
+        "DÉMO LOCALE — Ce résultat est préparé dans votre navigateur avec des règles simples, pas par un modèle d’IA."
+      );
+
+      switch (state.activeTool) {
+        case 1:
+          result = tr("SUMMARY\n", "الملخص\n", "RÉSUMÉ\n") +
+            (selectedSentences.length ? makeBullets(selectedSentences) : tr("No readable text was provided.", "لم يتم إدخال نص قابل للتلخيص.", "Aucun texte lisible fourni.")) +
+            "\n\n" + tr("Key details\n", "معلومات أساسية\n", "Points clés\n") +
+            tr(`Word count: ${words.length}\nSentence count: ${sentences.length}`, `عدد الكلمات: ${words.length}\nعدد الجمل: ${sentences.length}`, `Nombre de mots : ${words.length}\nNombre de phrases : ${sentences.length}`);
+          if (pdf) result += "\n\n" + tr("PDF selected: ", "ملف PDF المختار: ", "PDF sélectionné : ") + pdf.name +
+            "\n" + tr("For this local version, paste the PDF text into the text box; PDF extraction will be added later.", "في هذه النسخة، ألصقي نص PDF في الخانة؛ استخراج النص من الملف سنضيفوه لاحقاً.", "Pour cette version, collez le texte du PDF dans la zone; l’extraction sera ajoutée plus tard.");
+          break;
+        case 2:
+          result = tr("CLEANED & ORGANIZED TEXT\n", "النص المنظم والمنقح\n", "TEXTE NETTOYÉ ET ORGANISÉ\n") +
+            (sentences.length ? sentences.join("\n\n") : clean) +
+            "\n\n" + tr("Tip: review the wording before using it in an assignment.", "نصيحة: راجعي الصياغة قبل استعمال النص في واجب دراسي.", "Conseil : relisez le texte avant de l’utiliser dans un devoir.");
+          break;
+        case 3:
+          result = tr("READABILITY REVIEW\n", "مراجعة سهولة القراءة\n", "RÉVISION DE LA LISIBILITÉ\n") +
+            clean.replace(/\s+([,.;:!?])/g, "$1").replace(/([.!?])([A-Za-zÀ-ÿ])/g, "$1 $2") +
+            "\n\n" + tr("This local tool cleans spacing and punctuation only; it does not truly rewrite or humanize text with AI.", "هذه الأداة المحلية تصلح المسافات وعلامات الترقيم فقط؛ لا تعيد كتابة النص بالذكاء الاصطناعي.", "Cet outil local corrige seulement les espaces et la ponctuation; il ne réécrit pas le texte avec l’IA.");
+          break;
+        case 4:
+          result = tr("ESSAY / NOTES OUTLINE\n", "خطة المقال أو الملاحظات\n", "PLAN DE DISSERTATION / NOTES\n") +
+            tr("1. Introduction\n   - Introduce the topic\n   - State the main question\n\n2. Main section\n   - Explain the key idea\n   - Add evidence or examples\n   - Discuss another perspective\n\n3. Conclusion\n   - Summarize the main points\n   - Give a final insight\n\n", "1. المقدمة\n   - تقديم الموضوع\n   - طرح الإشكالية الرئيسية\n\n2. العرض\n   - شرح الفكرة الأساسية\n   - إضافة أدلة أو أمثلة\n   - مناقشة وجهة نظر أخرى\n\n3. الخاتمة\n   - تلخيص الأفكار الرئيسية\n   - تقديم خلاصة نهائية\n\n", "1. Introduction\n   - Présenter le sujet\n   - Formuler la question principale\n\n2. Développement\n   - Expliquer l’idée centrale\n   - Ajouter des preuves ou exemples\n   - Examiner un autre point de vue\n\n3. Conclusion\n   - Résumer les idées principales\n   - Donner une conclusion finale\n\n") +
+            tr("Your topic: ", "موضوعك: ", "Votre sujet : ") + clean +
+            "\n" + tr("Selected style: ", "الأسلوب المختار: ", "Style choisi : ") + $("style-select").value +
+            "\n" + tr("Selected length: ", "الطول المختار: ", "Longueur choisie : ") + state.length;
+          break;
+        case 5:
+          result = tr("CONCEPT STUDY FRAMEWORK\n", "خطة لفهم المفهوم\n", "CADRE D’ÉTUDE DU CONCEPT\n") +
+            tr("Concept / topic: ", "المفهوم / الموضوع: ", "Concept / sujet : ") + clean +
+            "\n\n" + tr("To understand it, work through these steps:\n1. Write a simple definition.\n2. Identify its main components.\n3. Explain how it works.\n4. Give one practical example.\n5. Compare it with a related concept.\n6. Summarize it in your own words.", "لفهمه، اتبعي هاد المراحل:\n1. اكتبي تعريفاً بسيطاً.\n2. حددي مكوناته الأساسية.\n3. اشرحي كيف يعمل.\n4. أعطي مثالاً تطبيقياً.\n5. قارنيه بمفهوم قريب منه.\n6. لخّصيه بأسلوبك.", "Pour le comprendre :\n1. Écrire une définition simple.\n2. Identifier ses composants.\n3. Expliquer son fonctionnement.\n4. Donner un exemple pratique.\n5. Le comparer à un concept proche.\n6. Le résumer avec vos propres mots.");
+          break;
+        case 6:
+          result = tr("ORGANIZED NOTES\n", "ملاحظات منظمة\n", "NOTES ORGANISÉES\n") +
+            (sentences.length ? makeBullets(sentences) : clean) +
+            "\n\n" + tr(`Total: ${words.length} words in ${sentences.length} points.`, `المجموع: ${words.length} كلمة في ${sentences.length} نقاط.`, `Total : ${words.length} mots en ${sentences.length} points.`);
+          break;
+        case 7:
+          result = tr("IMAGE REVIEW CHECKLIST\n", "قائمة تحليل الصورة\n", "GRILLE D’ANALYSE DE L’IMAGE\n") +
+            tr("Selected image: ", "الصورة المختارة: ", "Image sélectionnée : ") + image.name +
+            "\n\n" + tr("This version can display the selected image but cannot interpret its contents yet. Add your observations in the text box, for example:\n- Chart title\n- Axis labels and units\n- Main values or trends\n- What you want to understand", "هذه النسخة تقدر تختار الصورة ولكن ما زال ما كتفهمش محتواها تلقائياً. كتبي ملاحظاتك في الخانة، مثلاً:\n- عنوان الرسم\n- أسماء المحاور والوحدات\n- القيم أو الاتجاهات الرئيسية\n- شنو بغيتي تفهمي", "Cette version peut sélectionner l’image, mais ne sait pas encore l’interpréter. Ajoutez vos observations :\n- Titre du graphique\n- Axes et unités\n- Valeurs ou tendances\n- Ce que vous souhaitez comprendre");
+          if (clean) result += "\n\n" + tr("Your notes: ", "ملاحظاتك: ", "Vos notes : ") + clean;
+          break;
+        case 8:
+          result = tr("QUICK SELF-TEST\n", "اختبار ذاتي سريع\n", "AUTO-ÉVALUATION\n");
+          if (sentences.length) {
+            result += selectedSentences.map((s, i) => `${i + 1}. ${tr("Explain this idea in your own words: ", "اشرحي هذه الفكرة بأسلوبك: ", "Expliquez cette idée avec vos propres mots : ")}${s}\n   ${tr("Answer: ____________________", "الجواب: ____________________", "Réponse : ____________________")}`).join("\n\n");
+          } else {
+            result += tr("Add lesson text to create practice prompts.", "أضيفي نص الدرس لإنشاء أسئلة للمراجعة.", "Ajoutez le texte du cours pour créer des questions.");
+          }
+          break;
+        case 9:
+          result = tr("CRITICAL THINKING QUESTIONS\n", "أسئلة التفكير النقدي\n", "QUESTIONS DE RÉFLEXION CRITIQUE\n") +
+            tr("Topic: ", "الموضوع: ", "Sujet : ") + clean +
+            "\n\n" + makeBullets([
+              tr("What evidence supports the main claim?", "ما الأدلة التي تدعم الفكرة الرئيسية؟", "Quelles preuves soutiennent l’affirmation principale ?"),
+              tr("What assumptions are being made?", "ما الافتراضات التي يعتمد عليها الطرح؟", "Quelles hypothèses sont faites ?"),
+              tr("Is there another possible explanation?", "هل يوجد تفسير آخر ممكن؟", "Existe-t-il une autre explication possible ?"),
+              tr("What information is missing?", "ما المعلومات الناقصة؟", "Quelles informations manquent ?"),
+              tr("How could the claim be tested?", "كيف يمكن اختبار هذه الفكرة؟", "Comment pourrait-on vérifier cette affirmation ?")
+            ]);
+          break;
+        case 10:
+          result = tr("7-DAY STUDY STARTER PLAN\n", "خطة انطلاق للمذاكرة خلال 7 أيام\n", "PLAN DE RÉVISION SUR 7 JOURS\n") +
+            tr("Subject / topic: ", "المادة / الموضوع: ", "Matière / sujet : ") + clean +
+            "\n\n" + makeBullets([
+              tr("Day 1: List topics and identify difficult points.", "اليوم 1: حددي الدروس والنقاط الصعبة.", "Jour 1 : Lister les sujets et repérer les difficultés."),
+              tr("Day 2: Study the first section and take notes.", "اليوم 2: ادرسي الجزء الأول وخذي ملاحظات.", "Jour 2 : Étudier la première partie et prendre des notes."),
+              tr("Day 3: Study the next section and make examples.", "اليوم 3: ادرسي الجزء التالي وطبقي بأمثلة.", "Jour 3 : Étudier la partie suivante et faire des exemples."),
+              tr("Day 4: Review and create flashcards.", "اليوم 4: راجعي وأنشئي بطاقات للمراجعة.", "Jour 4 : Réviser et créer des fiches."),
+              tr("Day 5: Practice exercises.", "اليوم 5: حلي تمارين تطبيقية.", "Jour 5 : Faire des exercices."),
+              tr("Day 6: Take a short self-test.", "اليوم 6: ديري اختباراً ذاتياً قصيراً.", "Jour 6 : Faire un petit test."),
+              tr("Day 7: Review mistakes and plan the next week.", "اليوم 7: راجعي الأخطاء وخططي للأسبوع التالي.", "Jour 7 : Revoir les erreurs et planifier la semaine suivante.")
+            ]);
+          break;
+        default:
+          result = clean;
+      }
+
+      const meta = tr(
+        `\n\n---\nTool: ${title}\nInput words: ${words.length}\n`,
+        `\n\n---\nالأداة: ${title}\nعدد كلمات الإدخال: ${words.length}\n`,
+        `\n\n---\nOutil : ${title}\nNombre de mots saisis : ${words.length}\n`
+      );
+      $("ai-output-content").textContent = result + meta + "\n" + localNotice;
+      $("ai-output-box").classList.remove("hidden");
+      $("ai-output-box").scrollIntoView({behavior:"smooth",block:"nearest"});
+    }
+
+    async function copyOutput() {
+      const value = $("ai-output-content").textContent;
+      try {
+        await navigator.clipboard.writeText(value);
+        alert("Output copied!");
+      } catch (_) {
+        const area = document.createElement("textarea");
+        area.value = value;
+        area.setAttribute("readonly","");
+        area.style.position = "fixed";
+        area.style.opacity = "0";
+        document.body.appendChild(area);
+        area.select();
+        let success = false;
+        try { success = document.execCommand("copy"); } catch (_) {}
+        area.remove();
+        alert(success ? "Output copied!" : "Copy is unavailable. Please select and copy the text manually.");
+      }
+    }
+
+    function downloadOutput() {
+      const content = $("ai-output-content").textContent;
+      const blob = new Blob([content], {type:"text/plain;charset=utf-8"});
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "AcademicLens-AI-result.txt";
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function setRating(value) {
+      state.rating = value;
+      document.querySelectorAll("[data-rating]").forEach(button => {
+        const selected = Number(button.dataset.rating) <= value;
+        button.querySelector("i").className = selected ? "fa-solid fa-star" : "fa-regular fa-star";
+      });
+    }
+
+    const translations = {
+      en: {
+        about_title:"About the App", about_desc:"AcademicLens-AI is an academic study and research assistant designed to help students analyze papers, summarize lessons, and organize their work.",
+        settings_title:"Settings", lang_label:"Language", theme_label:"Dark Mode", help_title:"Help & Guidelines",
+        help_step1:"1. Select an academic tool card.", help_step2:"2. Choose a file or paste your lesson notes.", help_step3:"3. Customize the available options.", help_step4:"4. Click the action button to create a local practice result.",
+        rate_title:"Rate & Feedback", submit_btn:"Submit Feedback", tagline:'"Your intelligent companion for seamless academic studies and research analysis."',
+        sub_tagline:"Empowering students, researchers, and educators with dedicated AI-driven academic utilities.", dash_title:"Academic Tools Dashboard",
+        dash_sub:"Select any specialized card below to analyze papers, refine lessons, or organize research.",
+        pdf_pick:"Choose PDF file", image_pick:"Choose image", no_pdf:"No file selected", no_image:"No image selected", selected:"Selected: ",
+        pdf_label:"Upload Research PDF Paper", image_label:"Upload Lesson Diagram or Chart Image", input_label:"Input Lesson Text / Research Topic",
+        placeholder:"Paste your text or enter topic here...", process:"Process Request", alert_pdf:"Please choose a PDF file or enter some text first.", alert_image:"Please choose an image first.", alert_text:"Please enter your text or topic first.", output_ready:"Your request is ready for processing.", output_tool:"Tool: ", output_file:"Selected file: ", output_length:"Response length: ", output_style:"Writing style: ", output_input:"Your input:", output_demo:"This is a demonstration only. No AI model has processed this content yet. Connect a secure AI backend to generate a real answer.",
+        length_label:"Select Response / Essay Length", short:"Short", medium:"Medium", long:"Long", style_label:"Select Writing Style", analytical:"Analytical", narrative:"Narrative", argumentative:"Argumentative", descriptive:"Descriptive", pdf_upload:"Upload Research PDF Paper", image_upload:"Upload Lesson Diagram or Chart Image", text_input:"Input Lesson Text / Research Topic", copy:"Copy", download:"Download", demo_result:"Local Demo Result", demo_notice:"Local demo: text tools create simple study outputs in your browser. PDF extraction, image understanding, and real AI answers are not connected yet.", feedback_placeholder:"Leave feedback or suggestions...", feedback_thanks:"Thank you for your feedback!", close:"Close dialog", active_tools:"10 Active Tools"
+      },
+      ar: {
+        about_title:"نبذة عن التطبيق", about_desc:"AcademicLens-AI مساعد أكاديمي للدراسة والبحث، يساعد الطلاب على تنظيم الدروس والأبحاث.",
+        settings_title:"الإعدادات", lang_label:"اللغة", theme_label:"الوضع الليلي", help_title:"المساعدة والإرشادات",
+        help_step1:"1. اختر أداة من البطاقات الرئيسية.", help_step2:"2. اختر ملفاً أو الصق نص الدرس.", help_step3:"3. عدّل الخيارات المتاحة.", help_step4:"4. اضغط زر المعالجة لعرض نتيجة تجريبية.",
+        rate_title:"التقييم والآراء", submit_btn:"إرسال التقييم", tagline:'"رفيقك الذكي للدراسة الأكاديمية وتحليل الأبحاث."', sub_tagline:"أدوات أكاديمية ذكية لمساعدة الطلاب والباحثين.",
+        dash_title:"لوحة الأدوات الأكاديمية", dash_sub:"اختر أداة لتحليل الأبحاث أو تنظيم الدروس والمراجعة.",
+        pdf_pick:"اختيار ملف PDF", image_pick:"اختيار صورة", no_pdf:"لم يتم اختيار أي ملف", no_image:"لم يتم اختيار صورة", selected:"تم الاختيار: ",
+        pdf_label:"تحميل بحث بصيغة PDF", image_label:"تحميل صورة درس أو رسم بياني", input_label:"أدخل نص الدرس أو موضوع البحث",
+        placeholder:"ألصق النص أو اكتب الموضوع هنا...", process:"معالجة الطلب", alert_pdf:"يرجى اختيار ملف PDF أو إدخال نص أولاً.", alert_image:"يرجى اختيار صورة أولاً.", alert_text:"يرجى إدخال النص أو الموضوع أولاً.", output_ready:"طلبك جاهز للمعالجة.", output_tool:"الأداة: ", output_file:"الملف المختار: ", output_length:"طول الإجابة: ", output_style:"أسلوب الكتابة: ", output_input:"النص الذي أدخلته:", output_demo:"هذه مجرد تجربة توضيحية. لم يعالج نموذج ذكاء اصطناعي هذا المحتوى بعد. يلزم ربط الموقع بخدمة ذكاء اصطناعي لإنتاج إجابة حقيقية.",
+        length_label:"اختاري طول الإجابة أو المقال", short:"قصير", medium:"متوسط", long:"طويل", style_label:"اختاري أسلوب الكتابة", analytical:"تحليلي", narrative:"سردي", argumentative:"جدلي", descriptive:"وصفي", pdf_upload:"ارفعي بحثاً بصيغة PDF", image_upload:"ارفعي صورة الدرس أو الرسم البياني", text_input:"أدخلي نص الدرس أو موضوع البحث", copy:"نسخ", download:"تحميل", demo_result:"نتيجة تجريبية محلية", demo_notice:"نسخة تجريبية: تنشئ أدوات النص نتائج دراسية بسيطة داخل المتصفح. لم يتم ربط استخراج PDF أو فهم الصور أو إجابات الذكاء الاصطناعي الحقيقية بعد.", feedback_placeholder:"اتركي ملاحظاتك أو اقتراحاتك...", feedback_thanks:"شكراً على ملاحظاتك!", close:"إغلاق النافذة", active_tools:"10 أدوات متاحة"
+      },
+      fr: {
+        about_title:"À propos", about_desc:"AcademicLens-AI est un assistant d'étude et de recherche pour analyser les articles, résumer les cours et organiser le travail.",
+        settings_title:"Paramètres", lang_label:"Langue", theme_label:"Mode sombre", help_title:"Aide et consignes",
+        help_step1:"1. Sélectionnez une carte d’outil.", help_step2:"2. Choisissez un fichier ou collez vos notes.", help_step3:"3. Personnalisez les options disponibles.", help_step4:"4. Cliquez sur le bouton pour afficher le résultat de démonstration.",
+        rate_title:"Évaluation et commentaires", submit_btn:"Envoyer l’avis", tagline:'"Votre assistant intelligent pour les études et la recherche."', sub_tagline:"Des outils académiques assistés par l’IA pour les étudiants et chercheurs.",
+        dash_title:"Tableau de bord des outils", dash_sub:"Choisissez un outil pour analyser des articles, améliorer vos cours ou organiser vos recherches.",
+        pdf_pick:"Choisir un fichier PDF", image_pick:"Choisir une image", no_pdf:"Aucun fichier sélectionné", no_image:"Aucune image sélectionnée", selected:"Sélectionné : ",
+        pdf_label:"Importer un article de recherche PDF", image_label:"Importer une image ou un graphique", input_label:"Texte du cours / sujet de recherche",
+        placeholder:"Collez votre texte ou saisissez un sujet ici...", process:"Traiter la demande", alert_pdf:"Veuillez choisir un fichier PDF ou saisir du texte.", alert_image:"Veuillez choisir une image.", alert_text:"Veuillez saisir votre texte ou sujet.", output_ready:"Votre demande est prête à être traitée.", output_tool:"Outil : ", output_file:"Fichier sélectionné : ", output_length:"Longueur de la réponse : ", output_style:"Style d’écriture : ", output_input:"Votre saisie :", output_demo:"Ceci est une démonstration. Aucun modèle d’IA n’a encore traité ce contenu. Connectez un service d’IA sécurisé pour obtenir une vraie réponse.",
+        length_label:"Choisir la longueur de la réponse / dissertation", short:"Court", medium:"Moyen", long:"Long", style_label:"Choisir le style d’écriture", analytical:"Analytique", narrative:"Narratif", argumentative:"Argumentatif", descriptive:"Descriptif", pdf_upload:"Importer un article de recherche PDF", image_upload:"Importer une image de cours ou un graphique", text_input:"Saisir le texte du cours / sujet de recherche", copy:"Copier", download:"Télécharger", demo_result:"Résultat de démonstration local", demo_notice:"Démo locale : les outils textuels créent des résultats simples dans votre navigateur. L’extraction PDF, l’analyse d’images et les vraies réponses IA ne sont pas encore connectées.", feedback_placeholder:"Laissez un commentaire ou une suggestion...", feedback_thanks:"Merci pour votre retour !", close:"Fermer la fenêtre", active_tools:"10 outils actifs"
+      },
+      es: {
+        about_title:"Acerca de la aplicación", about_desc:"AcademicLens-AI es un asistente académico para analizar artículos, resumir lecciones y organizar el trabajo.",
+        settings_title:"Configuración", lang_label:"Idioma", theme_label:"Modo oscuro", help_title:"Ayuda e instrucciones",
+        help_step1:"1. Selecciona una herramienta.", help_step2:"2. Elige un archivo o pega tus apuntes.", help_step3:"3. Personaliza las opciones disponibles.", help_step4:"4. Pulsa el botón para ver el resultado de demostración.",
+        rate_title:"Calificación y comentarios", submit_btn:"Enviar comentarios", tagline:'"Tu compañero inteligente para estudiar e investigar."', sub_tagline:"Herramientas académicas con IA para estudiantes e investigadores.",
+        dash_title:"Panel de herramientas académicas", dash_sub:"Elige una herramienta para analizar artículos, mejorar lecciones u organizar investigaciones.",
+        pdf_pick:"Elegir archivo PDF", image_pick:"Elegir imagen", no_pdf:"Ningún archivo seleccionado", no_image:"Ninguna imagen seleccionada", selected:"Seleccionado: ",
+        pdf_label:"Subir artículo de investigación PDF", image_label:"Subir imagen o gráfico de la lección", input_label:"Texto de la lección / tema de investigación",
+        placeholder:"Pega tu texto o escribe un tema aquí...", process:"Procesar solicitud", alert_pdf:"Elige un archivo PDF o introduce texto primero.", alert_image:"Elige una imagen primero.", alert_text:"Introduce tu texto o tema primero.", output_ready:"Tu solicitud está lista para procesarse.", output_tool:"Herramienta: ", output_file:"Archivo seleccionado: ", output_length:"Longitud de respuesta: ", output_style:"Estilo de escritura: ", output_input:"Tu texto:", output_demo:"Esto es solo una demostración. Ningún modelo de IA ha procesado este contenido todavía. Conecta un servicio de IA seguro para obtener una respuesta real.",
+        length_label:"Seleccionar la longitud de la respuesta / ensayo", short:"Corto", medium:"Medio", long:"Largo", style_label:"Seleccionar estilo de escritura", analytical:"Analítico", narrative:"Narrativo", argumentative:"Argumentativo", descriptive:"Descriptivo", pdf_upload:"Subir artículo de investigación en PDF", image_upload:"Subir imagen de la lección o gráfico", text_input:"Introducir texto de la lección / tema de investigación", copy:"Copiar", download:"Descargar", demo_result:"Resultado de demostración local", demo_notice:"Demostración local: las herramientas de texto crean resultados sencillos en el navegador. La extracción de PDF, el análisis de imágenes y las respuestas reales de IA aún no están conectados.", feedback_placeholder:"Deja comentarios o sugerencias...", feedback_thanks:"¡Gracias por tus comentarios!", close:"Cerrar ventana", active_tools:"10 herramientas activas"
+      },
+      zh: {
+        about_title:"关于应用", about_desc:"AcademicLens-AI 是学术学习与研究助手，可帮助分析论文、总结课程并整理学习内容。",
+        settings_title:"设置", lang_label:"语言", theme_label:"深色模式", help_title:"帮助与指南",
+        help_step1:"1. 选择一个学术工具。", help_step2:"2. 选择文件或粘贴课程笔记。", help_step3:"3. 自定义可用选项。", help_step4:"4. 点击操作按钮查看演示结果。",
+        rate_title:"评分与反馈", submit_btn:"提交反馈", tagline:'"让学习与研究更轻松的智能助手。"', sub_tagline:"为学生、研究人员和教育工作者提供 AI 学术工具。",
+        dash_title:"学术工具面板", dash_sub:"选择工具来分析论文、优化课程内容或整理研究。",
+        pdf_pick:"选择 PDF 文件", image_pick:"选择图片", no_pdf:"未选择文件", no_image:"未选择图片", selected:"已选择：",
+        pdf_label:"上传 PDF 研究论文", image_label:"上传课程图片或图表", input_label:"输入课程文本 / 研究主题",
+        placeholder:"在此粘贴文本或输入主题...", process:"处理请求", alert_pdf:"请先选择 PDF 文件或输入文本。", alert_image:"请先选择图片。", alert_text:"请先输入文本或主题。", output_ready:"您的请求已准备好处理。", output_tool:"工具：", output_file:"已选文件：", output_length:"回答长度：", output_style:"写作风格：", output_input:"您输入的内容：", output_demo:"这只是演示。目前尚无 AI 模型处理此内容。连接安全的 AI 服务后才能生成真实回答。",
+        length_label:"选择回答 / 文章长度", short:"短", medium:"中", long:"长", style_label:"选择写作风格", analytical:"分析型", narrative:"叙述型", argumentative:"论证型", descriptive:"描述型", pdf_upload:"上传 PDF 研究论文", image_upload:"上传课程图片或图表", text_input:"输入课程文本 / 研究主题", copy:"复制", download:"下载", demo_result:"本地演示结果", demo_notice:"本地演示：文本工具会在浏览器中生成简单的学习内容。PDF 提取、图像理解和真实 AI 回答尚未连接。", feedback_placeholder:"留下反馈或建议……", feedback_thanks:"感谢您的反馈！", close:"关闭窗口", active_tools:"10 个可用工具"
+      },
+      ko: {
+        about_title:"앱 소개", about_desc:"AcademicLens-AI는 논문 분석, 수업 요약 및 학습 자료 정리를 돕는 학술 학습 도우미입니다.",
+        settings_title:"설정", lang_label:"언어", theme_label:"다크 모드", help_title:"도움말 및 안내",
+        help_step1:"1. 학술 도구 카드를 선택하세요.", help_step2:"2. 파일을 선택하거나 수업 노트를 붙여 넣으세요.", help_step3:"3. 사용 가능한 옵션을 설정하세요.", help_step4:"4. 버튼을 눌러 데모 결과를 확인하세요.",
+        rate_title:"평가 및 의견", submit_btn:"의견 제출", tagline:'"학습과 연구를 위한 지능형 동반자."', sub_tagline:"학생과 연구자를 위한 AI 기반 학술 도구입니다.",
+        dash_title:"학술 도구 대시보드", dash_sub:"논문 분석, 수업 개선 또는 연구 정리를 위한 도구를 선택하세요.",
+        pdf_pick:"PDF 파일 선택", image_pick:"이미지 선택", no_pdf:"선택된 파일 없음", no_image:"선택된 이미지 없음", selected:"선택됨: ",
+        pdf_label:"연구 PDF 업로드", image_label:"수업 이미지 또는 차트 업로드", input_label:"수업 텍스트 / 연구 주제 입력",
+        placeholder:"텍스트를 붙여 넣거나 주제를 입력하세요...", process:"요청 처리", alert_pdf:"먼저 PDF 파일을 선택하거나 텍스트를 입력하세요.", alert_image:"먼저 이미지를 선택하세요.", alert_text:"먼저 텍스트나 주제를 입력하세요.", output_ready:"요청을 처리할 준비가 되었습니다.", output_tool:"도구: ", output_file:"선택한 파일: ", output_length:"응답 길이: ", output_style:"작성 스타일: ", output_input:"입력한 내용:", output_demo:"이것은 데모입니다. 아직 AI 모델이 이 내용을 처리하지 않았습니다. 실제 답변을 생성하려면 안전한 AI 서비스를 연결해야 합니다.",
+        length_label:"답변 / 에세이 길이 선택", short:"짧게", medium:"보통", long:"길게", style_label:"글쓰기 스타일 선택", analytical:"분석형", narrative:"서술형", argumentative:"논증형", descriptive:"묘사형", pdf_upload:"PDF 연구 논문 업로드", image_upload:"수업 이미지 또는 차트 업로드", text_input:"수업 내용 / 연구 주제 입력", copy:"복사", download:"다운로드", demo_result:"로컬 데모 결과", demo_notice:"로컬 데모: 텍스트 도구는 브라우저에서 간단한 학습 결과를 만듭니다. PDF 추출, 이미지 이해 및 실제 AI 답변은 아직 연결되지 않았습니다.", feedback_placeholder:"의견이나 제안을 남겨 주세요...", feedback_thanks:"의견을 보내 주셔서 감사합니다!", close:"창 닫기", active_tools:"활성 도구 10개"
+      }
+    };
+
+
+    const toolTranslations = {
+      en: [
+        ["Academic Paper Summarizer","Upload research PDFs or paste text to prepare a summary and key insights.","Open Tool & Upload"],
+        ["Lesson Paraphraser & Refiner","Upload a PDF or paste text to refine, reorganize, and paraphrase lesson content.","Open Tool & Upload"],
+        ["Academic Tone Humanizer","Transform drafted text into natural, easy-to-read academic language.","Open Tool & Customize"],
+        ["Advanced Essay & Notes Writer","Prepare essays and study notes with custom length and writing style.","Open Tool & Configure"],
+        ["Concept & Terminology Explainer","Get clear, step-by-step explanations for complex concepts.","Open Tool"],
+        ["Quick Reference & Notes Organizer","Organize study notes, links, and references into structured summaries.","Open Tool"],
+        ["Academic Data & Chart Explainer","Choose charts, diagrams, or images for analysis.","Open Tool & Upload"],
+        ["Academic Quiz & Flashcards Generator","Prepare self-test quizzes and revision flashcards from your lesson.","Open Tool & Generate"],
+        ["Critical Thinking & Analysis Prompt","Evaluate claims and uncover critical research questions.","Open Tool"],
+        ["Study Schedule & Milestone Planner","Break down your syllabus into daily and weekly study milestones.","Open Tool & Plan"]
+      ],
+      ar: [
+        ["ملخّص الأبحاث الأكاديمية","ارفعي بحثاً بصيغة PDF أو الصقي النص للحصول على ملخص وأهم الأفكار.","فتح الأداة ورفع ملف"],
+        ["إعادة صياغة الدروس وتحسينها","ارفعي ملف PDF أو الصقي النص لإعادة تنظيم الدرس وتحسين صياغته.","فتح الأداة ورفع ملف"],
+        ["تحسين الأسلوب الأكاديمي","حوّلي النص إلى صياغة أكاديمية واضحة وسهلة القراءة.","فتح الأداة وتخصيصها"],
+        ["كاتب المقالات والملاحظات المتقدم","أعدّي المقالات وملاحظات الدراسة مع اختيار الطول وأسلوب الكتابة.","فتح الأداة والإعداد"],
+        ["شرح المفاهيم والمصطلحات","احصلي على شروحات واضحة ومتدرجة للمفاهيم المعقدة.","فتح الأداة"],
+        ["منظّم المراجع والملاحظات","نظّمي ملاحظات الدراسة والروابط والمراجع في ملخصات مرتبة.","فتح الأداة"],
+        ["شرح البيانات والرسوم البيانية","اختاري رسوماً بيانية أو مخططات أو صوراً لتحليلها.","فتح الأداة ورفع صورة"],
+        ["إنشاء الاختبارات وبطاقات المراجعة","أنشئي اختبارات ذاتية وبطاقات للمراجعة انطلاقاً من الدرس.","فتح الأداة وإنشاء اختبار"],
+        ["التفكير النقدي والتحليل","قيّمي الأفكار واكتشفي أسئلة بحثية تستحق التفكير.","فتح الأداة"],
+        ["مخطط الدراسة وتتبع الأهداف","قسّمي المقرر إلى أهداف ومراحل يومية وأسبوعية للمراجعة.","فتح الأداة والتخطيط"]
+      ],
+      fr: [
+        ["Résumé d’articles académiques","Importez un PDF ou collez un texte pour préparer un résumé et ses idées clés.","Ouvrir et importer"],
+        ["Reformulation et amélioration des cours","Importez un PDF ou collez un texte pour réorganiser et reformuler le cours.","Ouvrir et importer"],
+        ["Amélioration du ton académique","Transformez votre brouillon en un texte académique naturel et facile à lire.","Ouvrir et personnaliser"],
+        ["Rédacteur avancé de dissertations et notes","Préparez des dissertations et des notes avec une longueur et un style personnalisés.","Ouvrir et configurer"],
+        ["Explication des concepts et termes","Obtenez des explications claires et progressives des concepts complexes.","Ouvrir l’outil"],
+        ["Organisateur de références et de notes","Organisez vos notes, liens et références en résumés structurés.","Ouvrir l’outil"],
+        ["Explication des données et graphiques","Choisissez des graphiques, schémas ou images à analyser.","Ouvrir et importer"],
+        ["Générateur de quiz et fiches de révision","Créez des quiz et des fiches de révision à partir de votre cours.","Ouvrir et générer"],
+        ["Réflexion critique et analyse","Évaluez des arguments et formulez des questions de recherche.","Ouvrir l’outil"],
+        ["Planificateur d’étude et d’objectifs","Répartissez votre programme en objectifs quotidiens et hebdomadaires.","Ouvrir et planifier"]
+      ],
+      es: [
+        ["Resumidor de artículos académicos","Sube un PDF o pega texto para preparar un resumen y sus ideas clave.","Abrir y subir"],
+        ["Parafraseador y mejorador de lecciones","Sube un PDF o pega texto para reorganizar y mejorar la lección.","Abrir y subir"],
+        ["Mejorador del tono académico","Transforma borradores en textos académicos naturales y fáciles de leer.","Abrir y personalizar"],
+        ["Redactor avanzado de ensayos y apuntes","Prepara ensayos y apuntes con longitud y estilo personalizados.","Abrir y configurar"],
+        ["Explicador de conceptos y terminología","Obtén explicaciones claras y paso a paso de conceptos complejos.","Abrir herramienta"],
+        ["Organizador de referencias y apuntes","Organiza apuntes, enlaces y referencias en resúmenes estructurados.","Abrir herramienta"],
+        ["Explicador de datos y gráficos","Elige gráficos, diagramas o imágenes para analizarlos.","Abrir y subir"],
+        ["Generador de cuestionarios y tarjetas","Prepara cuestionarios y tarjetas de repaso a partir de tu lección.","Abrir y generar"],
+        ["Pensamiento crítico y análisis","Evalúa afirmaciones y descubre preguntas de investigación.","Abrir herramienta"],
+        ["Planificador de estudio y objetivos","Divide tu programa en metas diarias y semanales.","Abrir y planificar"]
+      ],
+      zh: [
+        ["学术论文摘要工具","上传研究 PDF 或粘贴文本，整理摘要和关键见解。","打开并上传"],
+        ["课程改写与优化工具","上传 PDF 或粘贴文本，重新组织并改写课程内容。","打开并上传"],
+        ["学术语气润色工具","将草稿转换为自然、易读的学术语言。","打开并自定义"],
+        ["高级论文与笔记写作工具","自定义长度和写作风格，准备论文和学习笔记。","打开并设置"],
+        ["概念与术语解释工具","获取复杂概念的清晰分步解释。","打开工具"],
+        ["参考资料与笔记整理工具","将学习笔记、链接和参考资料整理成结构化摘要。","打开工具"],
+        ["学术数据与图表解释工具","选择图表、示意图或图片进行分析。","打开并上传"],
+        ["测验与记忆卡生成器","根据课程内容创建自测题和复习卡片。","打开并生成"],
+        ["批判性思维与分析提示","评估观点并提出值得研究的问题。","打开工具"],
+        ["学习计划与里程碑规划器","将课程分解为每日和每周学习目标。","打开并规划"]
+      ],
+      ko: [
+        ["학술 논문 요약 도구","연구 PDF를 업로드하거나 텍스트를 붙여 넣어 요약과 핵심 내용을 정리하세요.","열기 및 업로드"],
+        ["수업 내용 바꾸어 쓰기 및 개선","PDF를 업로드하거나 텍스트를 붙여 넣어 수업 내용을 정리하고 바꾸어 쓰세요.","열기 및 업로드"],
+        ["학술 문체 다듬기","초안을 자연스럽고 읽기 쉬운 학술 문장으로 바꾸세요.","열기 및 사용자 지정"],
+        ["고급 에세이 및 노트 작성기","길이와 문체를 설정해 에세이와 학습 노트를 작성하세요.","열기 및 설정"],
+        ["개념 및 용어 설명 도구","복잡한 개념을 명확하고 단계적으로 설명받으세요.","도구 열기"],
+        ["참고자료 및 노트 정리 도구","학습 노트, 링크, 참고자료를 구조화된 요약으로 정리하세요.","도구 열기"],
+        ["학술 데이터 및 차트 설명 도구","분석할 차트, 도표 또는 이미지를 선택하세요.","열기 및 업로드"],
+        ["퀴즈 및 플래시카드 생성기","수업 내용을 바탕으로 자가 테스트와 복습 카드를 만드세요.","열기 및 생성"],
+        ["비판적 사고 및 분석","주장을 평가하고 연구 질문을 찾아보세요.","도구 열기"],
+        ["학습 일정 및 목표 계획기","학습 과정을 일일 및 주간 목표로 나누세요.","열기 및 계획"]
+      ]
+    };
+
+    function updateToolCardTranslations(lang) {
+      const rows = toolTranslations[lang] || toolTranslations.en;
+      document.querySelectorAll(".tool-card[data-tool]").forEach(card => {
+        const row = rows[Number(card.dataset.tool) - 1];
+        if (!row) return;
+        const title = card.querySelector("h3");
+        const desc = card.querySelector("p");
+        const emoji = card.querySelector("span.text-3xl");
+        const action = card.querySelector(".mt-4 span");
+        const originalEmojis = ["📄", "✍️", "🤖", "📝", "💡", "📚", "📊", "❓", "🔍", "⏱️"];
+        // Keep the original card icon and footer divider intact while translating text.
+        if (emoji) emoji.textContent = originalEmojis[Number(card.dataset.tool) - 1] || "📘";
+        if (title) title.textContent = row[0];
+        if (desc) desc.textContent = "(" + row[1] + ")";
+        if (action) action.textContent = row[2];
+      });
+    }
+
+    function changeLanguage(lang) {
+      const dict = translations[lang] || translations.en;
+      updateToolCardTranslations(lang);
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (Object.prototype.hasOwnProperty.call(dict, key)) el.textContent = dict[key];
+      });
+      const setText = (id, key) => { const el = $(id); if (el && dict[key]) el.textContent = dict[key]; };
+      setText("pdf-pick-label", "pdf_pick"); setText("image-pick-label", "image_pick");
+      setText("pdf-upload-label", "pdf_upload"); setText("image-upload-label", "image_upload");
+      setText("text-input-label", "text_input"); setText("modal-btn-text", "process");
+      const pdf = $("pdf-filename"), image = $("image-filename");
+      if (pdf && !$ ("pdf-file").files.length) pdf.textContent = dict.no_pdf;
+      if (image && !$ ("image-file").files.length) image.textContent = dict.no_image;
+      const area = $("modal-textarea"); if (area) area.placeholder = dict.placeholder;
+      const feedback = $("feedback-text"); if (feedback) feedback.placeholder = dict.feedback_placeholder;
+      setText("feedback-msg", "feedback_thanks");
+      const lengthLabel = document.querySelector("#length-options-zone > label");
+      if (lengthLabel && dict.length_label) lengthLabel.textContent = dict.length_label;
+      document.querySelectorAll(".length-btn").forEach(btn => {
+        const key = String(btn.dataset.length || "").toLowerCase();
+        if (dict[key]) btn.textContent = dict[key];
+      });
+      const styleLabel = document.querySelector("#style-options-zone > label");
+      if (styleLabel && dict.style_label) styleLabel.textContent = dict.style_label;
+      const styleSelect = $("style-select");
+      if (styleSelect) Array.from(styleSelect.options).forEach(opt => { if (dict[opt.value.toLowerCase()]) opt.textContent = dict[opt.value.toLowerCase()]; });
+      const outputHeading = document.querySelector("#ai-output-box > div > span");
+      if (outputHeading && dict.demo_result) outputHeading.lastChild.textContent = " " + dict.demo_result;
+      const copyBtn = $("copy-output-btn"), downloadBtn = $("download-output-btn");
+      if (copyBtn) copyBtn.lastChild.textContent = " " + (dict.copy || "Copy");
+      if (downloadBtn) downloadBtn.lastChild.textContent = " " + (dict.download || "Download");
+      const notice = document.querySelector("#ai-output-box")?.parentElement?.querySelector("p.text-\[11px\]");
+      if (notice && dict.demo_notice) notice.textContent = dict.demo_notice;
+      if (state.activeTool) {
+        const row = (toolTranslations[lang] || toolTranslations.en)[state.activeTool - 1];
+        if (row) { $("modal-title").textContent = row[0]; $("modal-subtitle").textContent = row[1]; }
+      }
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === "ar" ? "rtl" : "ltr";
+      document.documentElement.dataset.language = lang;
+    }
+
+    // Use event listeners rather than inline onclick handlers.
+    $("open-sidebar-btn").addEventListener("click", () => toggleSidebar(true));
+    $("close-sidebar-btn").addEventListener("click", () => toggleSidebar(false));
+    $("sidebar-backdrop").addEventListener("click", () => toggleSidebar(false));
+    $("nav-theme-btn").addEventListener("click", toggleDarkMode);
+    $("sidebar-theme-btn").addEventListener("click", toggleDarkMode);
+    $("close-modal-btn").addEventListener("click", closeModal);
+    $("tool-modal").addEventListener("click", event => { if (event.target === $("tool-modal")) closeModal(); });
+    $("modal-action-btn").addEventListener("click", processTool);
+    $("copy-output-btn").addEventListener("click", copyOutput);
+    if ($("download-output-btn")) $("download-output-btn").addEventListener("click", downloadOutput);
+    $("language-select").addEventListener("change", event => changeLanguage(event.target.value));
+    changeLanguage($("language-select").value);
+    $("pdf-file").addEventListener("change", event => { const d = translations[$("language-select").value] || translations.en; const f = event.target.files[0]; $("pdf-filename").textContent = f ? d.selected + f.name : d.no_pdf; });
+    $("image-file").addEventListener("change", event => { const d = translations[$("language-select").value] || translations.en; const f = event.target.files[0]; $("image-filename").textContent = f ? d.selected + f.name : d.no_image; });
+    document.querySelectorAll(".tool-card").forEach(card => {
+      const activate = () => openModal(card.dataset.tool);
+      card.addEventListener("click", activate);
+      card.addEventListener("keydown", event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); activate(); } });
+    });
+    document.querySelectorAll(".length-btn").forEach(button => {
+      button.addEventListener("click", () => {
+        state.length = button.dataset.length;
+        document.querySelectorAll(".length-btn").forEach(b => {
+          const selected = b === button;
+          b.classList.toggle("bg-academicBlue-600", selected);
+          b.classList.toggle("text-white", selected);
+        });
+      });
+    });
+    document.querySelectorAll("[data-rating]").forEach(button => button.addEventListener("click", () => setRating(Number(button.dataset.rating))));
+    $("submit-feedback-btn").addEventListener("click", () => {
+      $("feedback-msg").classList.remove("hidden");
+    });
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        closeModal();
+        toggleSidebar(false);
+      }
+    });
+
+    try { setDarkMode(localStorage.getItem("academicLensDarkMode") === "true"); }
+    catch (_) { setDarkMode(false); }
+
+    console.info("AcademicLens-AI ready.");
+  })();
+  </script>
+</body>
+</html>
